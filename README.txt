@@ -1,0 +1,30 @@
+This is a simple C language compiling toolkit based wxpython and gcc.
+
+Befor start the program, you need to confirm the "wxpython" and "gcc" 
+packages have been installed on your Linux host.
+
+For ubuntu user, you can run this command to install wxpython:
+
+    $ sudo aptitude install python-wxgtk2.8 libwxgtk2.8-dev python-wxtools \ 
+    libwxbase2.8-0 libwxgtk2.8-0 python-wxglade
+
+If you want to learn wxpython programing, you can also install: wx2.8-examples
+
+GCC may have been installed as default for most of Linux Desktop. 
+
+You can start the program by:
+
+    $ ./wxgcc
+
+after enter its directory.
+
+
+Of course, if the "wxgcc" have no executable privilege，just run: 
+
+    $ chmod +x wxgcc
+    $ ./wxgcc
+
+
+If have any question, please mailto: zwang@ucrobotics.com 
+
+For more information, please visit: www.ucrobotics.com
