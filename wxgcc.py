@@ -11,11 +11,6 @@
 # Licence:      wxWindows license
 #----------------------------------------------------------------------------
 
-# FIXME List:
-# * Add new icons into images.py
-# * Save/SaveAs will auto add a ".txt" suffix
-# * When scoll the log window to the top, its title bar will disappeared
-
 # TODO List:
 # * Multi-tab supported for compile multi-files 
 # * High light for C code source
@@ -29,7 +24,6 @@ import wx.richtext as rt
 import images
 from wx.lib.wordwrap import wordwrap
 
-FilePath = "/tmp/foo.c"
 BinPath = "/tmp/foo"
 LogPath = "/tmp/foo.log"
 ResPath = "/tmp/foo.res"
@@ -48,11 +42,13 @@ class WxgccFrame(wx.Frame):
     #def __init__(self, *args, **kw):
     #    wx.Frame.__init__(self, *args, **kw)
     def __init__(self, parent, id=-1):
-        wx.Frame.__init__(self, parent, wx.ID_ANY, title='wxPython GCC ToolKit 1.0', size=(800, 600), style = wx.DEFAULT_FRAME_STYLE)
+        wx.Frame.__init__(self, parent, wx.ID_ANY, title='wxPython GCC ToolKit 1.5', size=(800, 600), style = wx.DEFAULT_FRAME_STYLE)
         # set the frame icon
-        self.SetIcon(wx.Icon('./wxgcc.ico', wx.BITMAP_TYPE_ICO))
+        self.SetIcon(wx.Icon('./icon/wxgcc.ico', wx.BITMAP_TYPE_ICO))
         # set the window center
         self.Center()
+
+	self.FileFlag = 0
 	self.panel = wx.Panel(self, wx.ID_ANY)
 
         self.mgr = wx.aui.AuiManager()
@@ -61,12 +57,12 @@ class WxgccFrame(wx.Frame):
         self.MakeMenuBar()
         self.MakeToolBar()
         self.CreateStatusBar()
-        self.SetStatusText("Welcome to wxgcc 1.0 !")
+        self.SetStatusText("Welcome to wxgcc 1.5 !")
 
 	# create richText box: http://docs.wxwidgets.org/stable/wx_wxrichtextctrl.html
         self.rtc = rt.RichTextCtrl(self.panel, style=wx.VSCROLL|wx.HSCROLL|wx.NO_BORDER, size=(-1,300));
         wx.CallAfter(self.rtc.SetFocus)
-	self.InitRichText()
+	self.InitC()
 
 	# create log box
 	self.log = wx.TextCtrl(self.panel, -1, style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL, size=(-1,200))
@@ -90,12 +86,11 @@ class WxgccFrame(wx.Frame):
                          Name("LogWin"))
         self.mgr.Update()
 
-
-    def InitRichText(self):
+    def InitC(self):
         self.rtc.Freeze()
 
-        #self.rtc.BeginSuppressUndo()
-        #self.rtc.BeginParagraphSpacing(0, 20)
+        self.rtc.BeginSuppressUndo()
+        self.rtc.BeginParagraphSpacing(0, 20)
 
         self.rtc.WriteText("#include <stdio.h>")
         self.rtc.Newline()
@@ -106,7 +101,7 @@ class WxgccFrame(wx.Frame):
 	self.rtc.WriteText("{")
         self.rtc.Newline()
 
-	self.rtc.WriteText("printf(\"Hello WXGCC !\\n\");")
+	self.rtc.WriteText("printf(\"Hello WxGcc !\\n\");")
 	self.rtc.BeginLeftIndent(60)
         self.rtc.Newline()
 
@@ -116,13 +111,51 @@ class WxgccFrame(wx.Frame):
 
 	self.rtc.WriteText("}")
 
-        #self.rtc.EndParagraphSpacing()
-        #self.rtc.EndSuppressUndo()
+        self.rtc.EndParagraphSpacing()
+        self.rtc.EndSuppressUndo()
+        self.rtc.Thaw()
+
+    def InitCpp(self):
+        self.rtc.Freeze()
+
+        self.rtc.BeginSuppressUndo()
+        self.rtc.BeginParagraphSpacing(0, 20)
+
+        self.rtc.WriteText("#include<iostream>")
+        self.rtc.Newline()
+
+        self.rtc.WriteText("int main()")
+        self.rtc.Newline()
+
+        self.rtc.WriteText("{")
+        self.rtc.Newline()
+
+        self.rtc.WriteText("std::cout << \"Hello WxGcc !\\n\";")
+        self.rtc.BeginLeftIndent(60)
+        self.rtc.Newline()
+
+        self.rtc.WriteText("return 0;")
+        self.rtc.Newline()
+        self.rtc.EndLeftIndent()
+
+        self.rtc.WriteText("}")
+
+        self.rtc.EndParagraphSpacing()
+        self.rtc.EndSuppressUndo()
         self.rtc.Thaw()
 
     def OnURL(self, evt):
         wx.MessageBox(evt.GetString(), "URL Clicked")
         
+    def OnNewC(self, evt):
+	self.rtc.Clear()
+	self.InitC()
+	self.FileFlag = 0
+
+    def OnNewCpp(self, evt):
+	self.rtc.Clear()
+	self.InitCpp()
+	self.FileFlag = 1
 
     def OnFileOpen(self, evt):
         # This gives us a string suitable for the file dialog based on
@@ -138,16 +171,18 @@ class WxgccFrame(wx.Frame):
             if path:
                 ##fileType = types[dlg.GetFilterIndex()]
                 self.rtc.LoadFile(path, fileType)
-		self.SetStatusText(path)
+		self.SetTitle("[" + path + "] - WxGcc")
         dlg.Destroy()
 
         
     def OnFileSave(self, evt):
-        if not self.rtc.GetFilename():
+        path = self.rtc.GetFilename()
+	if path:
+		self.rtc.SaveFile(path, 1)
+		self.SetTitle("[" + path + "] - WxGcc")
+        else:
             self.OnFileSaveAs(evt)
             return
-        path = self.rtc.GetFilename()
-        self.rtc.SaveFile(path, 1)
         
     def OnFileSaveAs(self, evt):
         ##wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=True)
@@ -164,7 +199,7 @@ class WxgccFrame(wx.Frame):
                 ##if not path.endswith(ext):
                 ##    path += '.' + ext
                 self.rtc.SaveFile(path, fileType)
-                self.SetStatusText(path)
+		self.SetTitle("[" + path + "] - WxGcc")
         dlg.Destroy()
         
                 
@@ -195,12 +230,9 @@ class WxgccFrame(wx.Frame):
         dlg.ShowModal()
 
         handler.DeleteTemporaryImages()
-        
-
     
     def OnFileExit(self, evt):
         self.Close(True)
-
       
     def OnBold(self, evt):
         self.rtc.ApplyBoldToSelection()
@@ -232,7 +264,6 @@ class WxgccFrame(wx.Frame):
             attr.SetLeftIndent(attr.GetLeftIndent() + 100)
             attr.SetFlags(rt.TEXT_ATTR_LEFT_INDENT)
             self.rtc.SetStyle(r, attr)
-       
         
     def OnIndentLess(self, evt):
         attr = rt.TextAttrEx()
@@ -247,7 +278,6 @@ class WxgccFrame(wx.Frame):
             attr.SetLeftIndent(attr.GetLeftIndent() - 100)
             attr.SetFlags(rt.TEXT_ATTR_LEFT_INDENT)
             self.rtc.SetStyle(r, attr)
-
         
     def OnParagraphSpacingMore(self, evt):
         attr = rt.TextAttrEx()
@@ -261,7 +291,6 @@ class WxgccFrame(wx.Frame):
             attr.SetParagraphSpacingAfter(attr.GetParagraphSpacingAfter() + 20);
             attr.SetFlags(rt.TEXT_ATTR_PARA_SPACING_AFTER)
             self.rtc.SetStyle(r, attr)
-
         
     def OnParagraphSpacingLess(self, evt):
         attr = rt.TextAttrEx()
@@ -276,7 +305,6 @@ class WxgccFrame(wx.Frame):
                 attr.SetParagraphSpacingAfter(attr.GetParagraphSpacingAfter() - 20);
                 attr.SetFlags(rt.TEXT_ATTR_PARA_SPACING_AFTER)
                 self.rtc.SetStyle(r, attr)
-
         
     def OnLineSpacingSingle(self, evt): 
         attr = rt.TextAttrEx()
@@ -290,7 +318,6 @@ class WxgccFrame(wx.Frame):
             attr.SetFlags(rt.TEXT_ATTR_LINE_SPACING)
             attr.SetLineSpacing(10)
             self.rtc.SetStyle(r, attr)
- 
                 
     def OnLineSpacingHalf(self, evt):
         attr = rt.TextAttrEx()
@@ -304,7 +331,6 @@ class WxgccFrame(wx.Frame):
             attr.SetFlags(rt.TEXT_ATTR_LINE_SPACING)
             attr.SetLineSpacing(15)
             self.rtc.SetStyle(r, attr)
-
         
     def OnLineSpacingDouble(self, evt):
         attr = rt.TextAttrEx()
@@ -318,7 +344,6 @@ class WxgccFrame(wx.Frame):
             attr.SetFlags(rt.TEXT_ATTR_LINE_SPACING)
             attr.SetLineSpacing(20)
             self.rtc.SetStyle(r, attr)
-
 
     def OnFont(self, evt):
         if not self.rtc.HasSelection():
@@ -342,7 +367,6 @@ class WxgccFrame(wx.Frame):
                 self.rtc.SetStyle(r, attr)
         dlg.Destroy()
 
-
     def OnColour(self, evt):
         colourData = wx.ColourData()
         attr = rt.TextAttrEx()
@@ -363,7 +387,35 @@ class WxgccFrame(wx.Frame):
                     attr.SetTextColour(colour)
                     self.rtc.SetStyle(r, attr)
         dlg.Destroy()
-        
+
+    def OnRun(self, evt):
+        os.system("rm -rf /tmp/foo* > /dev/null 2>&1")
+	#get file suffix
+	if self.FileFlag == 0:
+		FilePath = BinPath + ".c"
+		CC = "gcc"
+	else:
+		FilePath = BinPath + ".cpp"
+		CC = "g++"
+        #save file
+        self.rtc.SaveFile(FilePath, 1);
+	self.SetTitle("[" + FilePath + "] - WxGcc")
+        #run binary
+        os.system(CC + " " + FilePath + " -o " + BinPath + " > " + LogPath + " 2>&1")
+
+        #get result log
+        if os.path.isfile(BinPath):
+            os.system(BinPath + " > " + ResPath + " 2>&1")
+            info = os.popen("cat " + ResPath).read()
+            self.log.SetDefaultStyle(wx.TextAttr("black",wx.NullColor))
+        #get error log
+        else:
+            info = os.popen("cat " + LogPath).read()
+            self.log.SetDefaultStyle(wx.TextAttr("red",wx.NullColor))
+        date = os.popen("date").read()
+        self.log.SetValue("************ Time: " + date.split(" ")[4] + " ************\n")
+        self.log.AppendText(info + "\n")
+
     def OnAbout(self, evt):
         # First we create and fill the info object
         info = wx.AboutDialogInfo()
@@ -384,27 +436,6 @@ class WxgccFrame(wx.Frame):
         # Then we call wx.AboutBox giving it that info object
         wx.AboutBox(info)
 
-    def OnRun(self, evt):
-	os.system("rm -rf /tmp/foo* > /dev/null 2>&1")
-	#save file
-	self.rtc.SaveFile(FilePath, 1);
-	#run binary
-	os.system("gcc " + FilePath + " -o " + BinPath + " > " + LogPath + " 2>&1")
-	#get result log
-	if os.path.isfile(BinPath):
-	    os.system(BinPath + " > " + ResPath + " 2>&1")
-	    info = os.popen("cat " + ResPath).read()
-	    self.log.SetDefaultStyle(wx.TextAttr("black",wx.NullColor))
-	#get error log
-	else:
-	    info = os.popen("cat " + LogPath).read()
-	    self.log.SetDefaultStyle(wx.TextAttr("red",wx.NullColor))
-	date = os.popen("date").read()
-	self.log.SetValue("************ Time: " + date.split(" ")[4] + " ************\n")
-	self.log.AppendText(info + "\n")
-	#print self.rtc.GetNumberOfLines()
-
-
     def OnUpdateBold(self, evt):
         evt.Check(self.rtc.IsSelectionBold())
     
@@ -422,14 +453,12 @@ class WxgccFrame(wx.Frame):
         
     def OnUpdateAlignRight(self, evt):
         evt.Check(self.rtc.IsSelectionAligned(rt.TEXT_ALIGNMENT_RIGHT))
-
     
     def ForwardEvent(self, evt):
         # The RichTextCtrl can handle menu and update events for undo,
         # redo, cut, copy, paste, delete, and select all, so just
         # forward the event to it.
         self.rtc.ProcessEvent(evt)
-
 
     def MakeMenuBar(self):
         def doBind(item, handler, updateUI=None):
@@ -438,55 +467,39 @@ class WxgccFrame(wx.Frame):
                 self.Bind(wx.EVT_UPDATE_UI, updateUI, item)
             
         fileMenu = wx.Menu()
-        doBind( fileMenu.Append(-1, "&Open\tCtrl+O", "Open a file"),
-                self.OnFileOpen )
-        doBind( fileMenu.Append(-1, "&Save\tCtrl+S", "Save a file"),
-                self.OnFileSave )
-        doBind( fileMenu.Append(-1, "&Save As...\tF12", "Save to a new file"),
-                self.OnFileSaveAs )
+        doBind( fileMenu.Append(-1, "&New C\tCtrl+N", "Create a C file"), self.OnNewC )
+        doBind( fileMenu.Append(-1, "&New C++\tCtrl+E", "Create a C++ file"), self.OnNewCpp )
+        doBind( fileMenu.Append(-1, "&Open\tCtrl+O", "Open a file"), self.OnFileOpen )
+	fileMenu.AppendSeparator()
+        doBind( fileMenu.Append(-1, "&Save\tCtrl+S", "Save a file"), self.OnFileSave )
+        doBind( fileMenu.Append(-1, "&Save As...\tF12", "Save to a new file"), self.OnFileSaveAs )
+        doBind( fileMenu.Append(-1, "&View as HTML", "View HTML"), self.OnFileViewHTML)
         fileMenu.AppendSeparator()
-        doBind( fileMenu.Append(-1, "&View as HTML", "View HTML"),
-                self.OnFileViewHTML)
-        fileMenu.AppendSeparator()
-        doBind( fileMenu.Append(-1, "E&xit\tCtrl+Q", "Quit this program"),
-                self.OnFileExit )
+        doBind( fileMenu.Append(-1, "E&xit\tCtrl+Q", "Quit this program"), self.OnFileExit )
         
         editMenu = wx.Menu()
-        doBind( editMenu.Append(wx.ID_UNDO, "&Undo\tCtrl+Z"),
-                self.ForwardEvent, self.ForwardEvent)
-        doBind( editMenu.Append(wx.ID_REDO, "&Redo\tCtrl+Y"),
-                self.ForwardEvent, self.ForwardEvent )
+        doBind( editMenu.Append(wx.ID_UNDO, "&Undo\tCtrl+Z"), self.ForwardEvent, self.ForwardEvent)
+        doBind( editMenu.Append(wx.ID_REDO, "&Redo\tCtrl+Y"), self.ForwardEvent, self.ForwardEvent )
         editMenu.AppendSeparator()
-        doBind( editMenu.Append(wx.ID_CUT, "Cu&t\tCtrl+X"),
-                self.ForwardEvent, self.ForwardEvent )
-        doBind( editMenu.Append(wx.ID_COPY, "&Copy\tCtrl+C"),
-                self.ForwardEvent, self.ForwardEvent)
-        doBind( editMenu.Append(wx.ID_PASTE, "&Paste\tCtrl+V"),
-                self.ForwardEvent, self.ForwardEvent)
-        doBind( editMenu.Append(wx.ID_CLEAR, "&Delete\tDel"),
-                self.ForwardEvent, self.ForwardEvent)
+        doBind( editMenu.Append(wx.ID_CUT, "Cu&t\tCtrl+X"), self.ForwardEvent, self.ForwardEvent )
+        doBind( editMenu.Append(wx.ID_COPY, "&Copy\tCtrl+C"), self.ForwardEvent, self.ForwardEvent)
+        doBind( editMenu.Append(wx.ID_PASTE, "&Paste\tCtrl+V"), self.ForwardEvent, self.ForwardEvent)
+        doBind( editMenu.Append(wx.ID_CLEAR, "&Delete\tDel"), self.ForwardEvent, self.ForwardEvent)
         editMenu.AppendSeparator()
-        doBind( editMenu.Append(wx.ID_SELECTALL, "Select A&ll\tCtrl+A"),
-                self.ForwardEvent, self.ForwardEvent )
+        doBind( editMenu.Append(wx.ID_SELECTALL, "Select A&ll\tCtrl+A"), self.ForwardEvent, self.ForwardEvent )
         
         #doBind( editMenu.AppendSeparator(),  )
         #doBind( editMenu.Append(-1, "&Find...\tCtrl+F"),  )
         #doBind( editMenu.Append(-1, "&Replace...\tCtrl+R"),  )
 
         formatMenu = wx.Menu()
-        doBind( formatMenu.AppendCheckItem(-1, "&Bold\tCtrl+B"),
-                self.OnBold, self.OnUpdateBold)
-        doBind( formatMenu.AppendCheckItem(-1, "&Italic\tCtrl+I"),
-                self.OnItalic, self.OnUpdateItalic)
-        doBind( formatMenu.AppendCheckItem(-1, "&Underline\tCtrl+U"),
-                self.OnUnderline, self.OnUpdateUnderline)
+        doBind( formatMenu.AppendCheckItem(-1, "&Bold\tCtrl+B"), self.OnBold, self.OnUpdateBold)
+        doBind( formatMenu.AppendCheckItem(-1, "&Italic\tCtrl+I"), self.OnItalic, self.OnUpdateItalic)
+        doBind( formatMenu.AppendCheckItem(-1, "&Underline\tCtrl+U"), self.OnUnderline, self.OnUpdateUnderline)
         formatMenu.AppendSeparator()
-        doBind( formatMenu.AppendCheckItem(-1, "L&eft Align"),
-                self.OnAlignLeft, self.OnUpdateAlignLeft)
-        doBind( formatMenu.AppendCheckItem(-1, "&Centre"),
-                self.OnAlignCenter, self.OnUpdateAlignCenter)
-        doBind( formatMenu.AppendCheckItem(-1, "&Right Align"),
-                self.OnAlignRight, self.OnUpdateAlignRight)
+        doBind( formatMenu.AppendCheckItem(-1, "L&eft Align"), self.OnAlignLeft, self.OnUpdateAlignLeft)
+        doBind( formatMenu.AppendCheckItem(-1, "&Centre"), self.OnAlignCenter, self.OnUpdateAlignCenter)
+        doBind( formatMenu.AppendCheckItem(-1, "&Right Align"), self.OnAlignRight, self.OnUpdateAlignRight)
         formatMenu.AppendSeparator()
         doBind( formatMenu.Append(-1, "Indent &More"), self.OnIndentMore)
         doBind( formatMenu.Append(-1, "Indent &Less"), self.OnIndentLess)
@@ -514,7 +527,6 @@ class WxgccFrame(wx.Frame):
 	mb.Append(helpMenu, "&Help")
         self.SetMenuBar(mb)
 
-
     def MakeToolBar(self):
         def doBind(item, handler, updateUI=None):
             self.Bind(wx.EVT_TOOL, handler, item)
@@ -522,46 +534,32 @@ class WxgccFrame(wx.Frame):
                 self.Bind(wx.EVT_UPDATE_UI, updateUI, item)
         
         tbar = self.CreateToolBar()
-        doBind( tbar.AddTool(-1, images.get_rt_openBitmap(),
-                            shortHelpString="Open"), self.OnFileOpen)
-        doBind( tbar.AddTool(-1, images.get_rt_saveBitmap(),
-                            shortHelpString="Save"), self.OnFileSave)
+	doBind( tbar.AddTool(-1, wx.Bitmap("./icon/createc.png"), shortHelpString="New C"), self.OnNewC)
+	doBind( tbar.AddTool(-1, wx.Bitmap("./icon/createcpp.png"), shortHelpString="New C++"), self.OnNewCpp)
         tbar.AddSeparator()
-        doBind( tbar.AddTool(wx.ID_CUT, images.get_rt_cutBitmap(),
-                            shortHelpString="Cut"), self.ForwardEvent, self.ForwardEvent)
-        doBind( tbar.AddTool(wx.ID_COPY, images.get_rt_copyBitmap(),
-                            shortHelpString="Copy"), self.ForwardEvent, self.ForwardEvent)
-        doBind( tbar.AddTool(wx.ID_PASTE, images.get_rt_pasteBitmap(),
-                            shortHelpString="Paste"), self.ForwardEvent, self.ForwardEvent)
+        doBind( tbar.AddTool(-1, images.get_rt_openBitmap(), shortHelpString="Open"), self.OnFileOpen)
+        doBind( tbar.AddTool(-1, images.get_rt_saveBitmap(), shortHelpString="Save"), self.OnFileSave)
         tbar.AddSeparator()
-        doBind( tbar.AddTool(wx.ID_UNDO, images.get_rt_undoBitmap(),
-                            shortHelpString="Undo"), self.ForwardEvent, self.ForwardEvent)
-        doBind( tbar.AddTool(wx.ID_REDO, images.get_rt_redoBitmap(),
-                            shortHelpString="Redo"), self.ForwardEvent, self.ForwardEvent)
+        doBind( tbar.AddTool(wx.ID_UNDO, images.get_rt_undoBitmap(), shortHelpString="Undo"), self.ForwardEvent, self.ForwardEvent)
+        doBind( tbar.AddTool(wx.ID_REDO, images.get_rt_redoBitmap(), shortHelpString="Redo"), self.ForwardEvent, self.ForwardEvent)
         tbar.AddSeparator()
-        doBind( tbar.AddTool(-1, images.get_rt_boldBitmap(), isToggle=True,
-                            shortHelpString="Bold"), self.OnBold, self.OnUpdateBold)
-        doBind( tbar.AddTool(-1, images.get_rt_italicBitmap(), isToggle=True,
-                            shortHelpString="Italic"), self.OnItalic, self.OnUpdateItalic)
-        doBind( tbar.AddTool(-1, images.get_rt_underlineBitmap(), isToggle=True,
-                            shortHelpString="Underline"), self.OnUnderline, self.OnUpdateUnderline)
+        doBind( tbar.AddTool(-1, images.get_rt_boldBitmap(), isToggle=True, shortHelpString="Bold"), self.OnBold, self.OnUpdateBold)
+        doBind( tbar.AddTool(-1, images.get_rt_italicBitmap(), isToggle=True, shortHelpString="Italic"), self.OnItalic, self.OnUpdateItalic)
+        doBind( tbar.AddTool(-1, images.get_rt_underlineBitmap(), isToggle=True, shortHelpString="Underline"), self.OnUnderline, self.OnUpdateUnderline)
         tbar.AddSeparator()
-        doBind( tbar.AddTool(-1, images.get_rt_alignleftBitmap(), isToggle=True,
-                            shortHelpString="Align Left"), self.OnAlignLeft, self.OnUpdateAlignLeft)
-        doBind( tbar.AddTool(-1, images.get_rt_centreBitmap(), isToggle=True,
-                            shortHelpString="Center"), self.OnAlignCenter, self.OnUpdateAlignCenter)
-        doBind( tbar.AddTool(-1, images.get_rt_alignrightBitmap(), isToggle=True,
-                            shortHelpString="Align Right"), self.OnAlignRight, self.OnUpdateAlignRight)
+        doBind( tbar.AddTool(-1, images.get_rt_alignleftBitmap(), isToggle=True, shortHelpString="Align Left"), self.OnAlignLeft, self.OnUpdateAlignLeft)
+        doBind( tbar.AddTool(-1, images.get_rt_centreBitmap(), isToggle=True, shortHelpString="Center"), self.OnAlignCenter, self.OnUpdateAlignCenter)
+        doBind( tbar.AddTool(-1, images.get_rt_alignrightBitmap(), isToggle=True, shortHelpString="Align Right"), self.OnAlignRight, self.OnUpdateAlignRight)
         tbar.AddSeparator()
         doBind( tbar.AddTool(-1, images.get_rt_indentlessBitmap(), shortHelpString="Indent Less"), self.OnIndentLess)
         doBind( tbar.AddTool(-1, images.get_rt_indentmoreBitmap(), shortHelpString="Indent More"), self.OnIndentMore)
         tbar.AddSeparator()
         doBind( tbar.AddTool(-1, images.get_rt_fontBitmap(),  shortHelpString="Font"), self.OnFont)
         doBind( tbar.AddTool(-1, images.get_rt_colourBitmap(), shortHelpString="Font Colour"), self.OnColour)
-        doBind( tbar.AddTool(-1, images.getSmallDnArrowBitmap(), shortHelpString="Run"), self.OnRun)
+        tbar.AddSeparator()
+        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/run.png"), shortHelpString="Run"), self.OnRun)
 
         tbar.Realize()
-
 
 #----------------------------------------------------------------------
 
