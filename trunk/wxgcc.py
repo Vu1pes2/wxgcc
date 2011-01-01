@@ -29,7 +29,6 @@ import wx.richtext as rt
 import images
 from wx.lib.wordwrap import wordwrap
 
-ALLOW_AUI_FLOATING = False
 FilePath = "/tmp/foo.c"
 BinPath = "/tmp/foo"
 LogPath = "/tmp/foo.log"
@@ -58,14 +57,13 @@ class WxgccFrame(wx.Frame):
 
         self.mgr = wx.aui.AuiManager()
         self.mgr.SetManagedWindow(self.panel)
-	#self.sizer = wx.BoxSizer(wx.VERTICAL)
 
         self.MakeMenuBar()
         self.MakeToolBar()
         self.CreateStatusBar()
         self.SetStatusText("Welcome to wxgcc 1.0 !")
 
-	# create richText box
+	# create richText box: http://docs.wxwidgets.org/stable/wx_wxrichtextctrl.html
         self.rtc = rt.RichTextCtrl(self.panel, style=wx.VSCROLL|wx.HSCROLL|wx.NO_BORDER, size=(-1,300));
         wx.CallAfter(self.rtc.SetFocus)
 	self.InitRichText()
@@ -73,12 +71,12 @@ class WxgccFrame(wx.Frame):
 	# create log box
 	self.log = wx.TextCtrl(self.panel, -1, style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL, size=(-1,200))
 
-
+	# for detail: http://docs.wxwidgets.org/stable/wx_wxauipaneinfo.html
         self.mgr.AddPane(self.rtc,
                          wx.aui.AuiPaneInfo().
                          CenterPane().BestSize((-1, 300)).
-                         MinSize((-1, 100)).
-                         Floatable(ALLOW_AUI_FLOATING).FloatingSize((-1, 400)).
+                         #MinSize((-1, 200)).
+                         Floatable(False).
                          Caption("Edit").
                          CloseButton(False).
                          Name("EditWin"))
@@ -86,7 +84,7 @@ class WxgccFrame(wx.Frame):
                          wx.aui.AuiPaneInfo().
                          Bottom().BestSize((-1, 200)).
                          MinSize((-1, 100)).
-                         Floatable(ALLOW_AUI_FLOATING).FloatingSize((-1, 300)).
+                         Floatable(False).
                          Caption("Log").
                          CloseButton(False).
                          Name("LogWin"))
@@ -129,15 +127,18 @@ class WxgccFrame(wx.Frame):
     def OnFileOpen(self, evt):
         # This gives us a string suitable for the file dialog based on
         # the file handlers that are loaded
-        wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=False)
+        ##wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=False)
+        wildcard = "Files (*.c;*.cpp;*.txt)|*.c;*.cpp;*.txt"
+        fileType = 1
         dlg = wx.FileDialog(self, "Choose a filename",
                             wildcard=wildcard,
                             style=wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             if path:
-                fileType = types[dlg.GetFilterIndex()]
+                ##fileType = types[dlg.GetFilterIndex()]
                 self.rtc.LoadFile(path, fileType)
+		self.SetStatusText(path)
         dlg.Destroy()
 
         
@@ -145,22 +146,25 @@ class WxgccFrame(wx.Frame):
         if not self.rtc.GetFilename():
             self.OnFileSaveAs(evt)
             return
-        self.rtc.SaveFile()
-
+        path = self.rtc.GetFilename()
+        self.rtc.SaveFile(path, 1)
         
     def OnFileSaveAs(self, evt):
-        wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=True)
+        ##wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=True)
+        wildcard = "Files (*.c;*.cpp;*.txt)|*.c;*.cpp;*.txt"
+        fileType = 1
         dlg = wx.FileDialog(self, "Choose a filename",
                             wildcard=wildcard,
                             style=wx.SAVE)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             if path:
-                fileType = types[dlg.GetFilterIndex()]
-                ext = rt.RichTextBuffer.FindHandlerByType(fileType).GetExtension()
-                if not path.endswith(ext):
-                    path += '.' + ext
+                ##fileType = types[dlg.GetFilterIndex()]
+                ##ext = rt.RichTextBuffer.FindHandlerByType(fileType).GetExtension()
+                ##if not path.endswith(ext):
+                ##    path += '.' + ext
                 self.rtc.SaveFile(path, fileType)
+                self.SetStatusText(path)
         dlg.Destroy()
         
                 
@@ -381,8 +385,8 @@ class WxgccFrame(wx.Frame):
         wx.AboutBox(info)
 
     def OnRun(self, evt):
-	#save file
 	os.system("rm -rf /tmp/foo* > /dev/null 2>&1")
+	#save file
 	self.rtc.SaveFile(FilePath, 1);
 	#run binary
 	os.system("gcc " + FilePath + " -o " + BinPath + " > " + LogPath + " 2>&1")
@@ -398,6 +402,8 @@ class WxgccFrame(wx.Frame):
 	date = os.popen("date").read()
 	self.log.SetValue("************ Time: " + date.split(" ")[4] + " ************\n")
 	self.log.AppendText(info + "\n")
+	#print self.rtc.GetNumberOfLines()
+
 
     def OnUpdateBold(self, evt):
         evt.Check(self.rtc.IsSelectionBold())
