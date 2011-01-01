@@ -420,7 +420,7 @@ class WxgccFrame(wx.Frame):
         # First we create and fill the info object
         info = wx.AboutDialogInfo()
         info.Name = "wxgcc"
-        info.Version = "1.0"
+        info.Version = "1.5"
         info.Copyright = "(C) 2010 Zechao Wang"
         info.Description = wordwrap(
             "The \"wxgcc (wxPython GCC Compiler)\" is a simple C language compiler toolkit which used under Linux."
