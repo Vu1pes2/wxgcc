@@ -21,7 +21,6 @@ import os
 import wx
 import wx.aui
 import wx.richtext as rt
-import images
 from wx.lib.wordwrap import wordwrap
 
 BinPath = "/tmp/foo"
@@ -89,8 +88,8 @@ class WxgccFrame(wx.Frame):
     def InitC(self):
         self.rtc.Freeze()
 
-	self.rtc.SetBackgroundColour((225,248,225))
-	self.log.SetBackgroundColour((225,248,225))
+	self.rtc.SetBackgroundColour((207,247,207))
+	self.log.SetBackgroundColour((207,247,207))
         #self.rtc.BeginTextColour((255,255,255))
 
         self.rtc.BeginSuppressUndo()
@@ -122,8 +121,8 @@ class WxgccFrame(wx.Frame):
     def InitCpp(self):
         self.rtc.Freeze()
 
-	self.rtc.SetBackgroundColour((225,225,248))
-	self.log.SetBackgroundColour((225,225,248))
+	self.rtc.SetBackgroundColour((207,207,247))
+	self.log.SetBackgroundColour((207,207,247))
 
         self.rtc.BeginSuppressUndo()
         self.rtc.BeginParagraphSpacing(0, 20)
@@ -156,12 +155,14 @@ class WxgccFrame(wx.Frame):
         
     def OnNewC(self, evt):
 	self.rtc.Clear()
+	self.log.Clear()
 	self.InitC()
 	self.FileFlag = 0
 	self.SetTitle("[Untitled C File] - WxGcc")
 
     def OnNewCpp(self, evt):
 	self.rtc.Clear()
+	self.log.Clear()
 	self.InitCpp()
 	self.FileFlag = 1
 	self.SetTitle("[Untitled C++ File] - WxGcc")
@@ -545,28 +546,28 @@ class WxgccFrame(wx.Frame):
                 self.Bind(wx.EVT_UPDATE_UI, updateUI, item)
         
         tbar = self.CreateToolBar()
-	doBind( tbar.AddTool(-1, wx.Bitmap("./icon/createc.png"), shortHelpString="New C"), self.OnNewC)
-	doBind( tbar.AddTool(-1, wx.Bitmap("./icon/createcpp.png"), shortHelpString="New C++"), self.OnNewCpp)
+	doBind( tbar.AddTool(-1, wx.Bitmap("./icon/c.png"), shortHelpString="New C"), self.OnNewC)
+	doBind( tbar.AddTool(-1, wx.Bitmap("./icon/cpp.png"), shortHelpString="New C++"), self.OnNewCpp)
         tbar.AddSeparator()
-        doBind( tbar.AddTool(-1, images.get_rt_openBitmap(), shortHelpString="Open"), self.OnFileOpen)
-        doBind( tbar.AddTool(-1, images.get_rt_saveBitmap(), shortHelpString="Save"), self.OnFileSave)
+        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/open.png"), shortHelpString="Open"), self.OnFileOpen)
+        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/save.png"), shortHelpString="Save"), self.OnFileSave)
         tbar.AddSeparator()
-        doBind( tbar.AddTool(wx.ID_UNDO, images.get_rt_undoBitmap(), shortHelpString="Undo"), self.ForwardEvent, self.ForwardEvent)
-        doBind( tbar.AddTool(wx.ID_REDO, images.get_rt_redoBitmap(), shortHelpString="Redo"), self.ForwardEvent, self.ForwardEvent)
+        doBind( tbar.AddTool(wx.ID_UNDO, wx.Bitmap("./icon/undo.png"), shortHelpString="Undo"), self.ForwardEvent, self.ForwardEvent)
+        doBind( tbar.AddTool(wx.ID_REDO, wx.Bitmap("./icon/redo.png"), shortHelpString="Redo"), self.ForwardEvent, self.ForwardEvent)
         tbar.AddSeparator()
-        doBind( tbar.AddTool(-1, images.get_rt_boldBitmap(), isToggle=True, shortHelpString="Bold"), self.OnBold, self.OnUpdateBold)
-        doBind( tbar.AddTool(-1, images.get_rt_italicBitmap(), isToggle=True, shortHelpString="Italic"), self.OnItalic, self.OnUpdateItalic)
-        doBind( tbar.AddTool(-1, images.get_rt_underlineBitmap(), isToggle=True, shortHelpString="Underline"), self.OnUnderline, self.OnUpdateUnderline)
+        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/bold.png"), isToggle=True, shortHelpString="Bold"), self.OnBold, self.OnUpdateBold)
+        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/italic.png"), isToggle=True, shortHelpString="Italic"), self.OnItalic, self.OnUpdateItalic)
+        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/underline.png"), isToggle=True, shortHelpString="Underline"), self.OnUnderline, self.OnUpdateUnderline)
         tbar.AddSeparator()
-        doBind( tbar.AddTool(-1, images.get_rt_alignleftBitmap(), isToggle=True, shortHelpString="Align Left"), self.OnAlignLeft, self.OnUpdateAlignLeft)
-        doBind( tbar.AddTool(-1, images.get_rt_centreBitmap(), isToggle=True, shortHelpString="Center"), self.OnAlignCenter, self.OnUpdateAlignCenter)
-        doBind( tbar.AddTool(-1, images.get_rt_alignrightBitmap(), isToggle=True, shortHelpString="Align Right"), self.OnAlignRight, self.OnUpdateAlignRight)
+        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/left.png"), isToggle=True, shortHelpString="Align Left"), self.OnAlignLeft, self.OnUpdateAlignLeft)
+        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/center.png"), isToggle=True, shortHelpString="Center"), self.OnAlignCenter, self.OnUpdateAlignCenter)
+        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/right.png"), isToggle=True, shortHelpString="Align Right"), self.OnAlignRight, self.OnUpdateAlignRight)
         tbar.AddSeparator()
-        doBind( tbar.AddTool(-1, images.get_rt_indentlessBitmap(), shortHelpString="Indent Less"), self.OnIndentLess)
-        doBind( tbar.AddTool(-1, images.get_rt_indentmoreBitmap(), shortHelpString="Indent More"), self.OnIndentMore)
+        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/indent-less.png"), shortHelpString="Indent Less"), self.OnIndentLess)
+        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/indent-more.png"), shortHelpString="Indent More"), self.OnIndentMore)
         tbar.AddSeparator()
-        doBind( tbar.AddTool(-1, images.get_rt_fontBitmap(),  shortHelpString="Font"), self.OnFont)
-        doBind( tbar.AddTool(-1, images.get_rt_colourBitmap(), shortHelpString="Font Colour"), self.OnColour)
+        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/font.png"),  shortHelpString="Font"), self.OnFont)
+        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/colour.png"), shortHelpString="Font Colour"), self.OnColour)
         tbar.AddSeparator()
         doBind( tbar.AddTool(-1, wx.Bitmap("./icon/run.png"), shortHelpString="Run"), self.OnRun)
 
