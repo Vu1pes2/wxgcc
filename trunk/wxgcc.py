@@ -59,13 +59,13 @@ class WxgccFrame(wx.Frame):
         self.CreateStatusBar()
         self.SetStatusText("Welcome to wxgcc 1.5 !")
 
+	# create log box
+	self.log = wx.TextCtrl(self.panel, -1, style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL, size=(-1,200))
+
 	# create richText box: http://docs.wxwidgets.org/stable/wx_wxrichtextctrl.html
         self.rtc = rt.RichTextCtrl(self.panel, style=wx.VSCROLL|wx.HSCROLL|wx.NO_BORDER, size=(-1,300));
         wx.CallAfter(self.rtc.SetFocus)
 	self.InitC()
-
-	# create log box
-	self.log = wx.TextCtrl(self.panel, -1, style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL, size=(-1,200))
 
 	# for detail: http://docs.wxwidgets.org/stable/wx_wxauipaneinfo.html
         self.mgr.AddPane(self.rtc,
@@ -89,6 +89,10 @@ class WxgccFrame(wx.Frame):
     def InitC(self):
         self.rtc.Freeze()
 
+	self.rtc.SetBackgroundColour((225,248,225))
+	self.log.SetBackgroundColour((225,248,225))
+        #self.rtc.BeginTextColour((255,255,255))
+
         self.rtc.BeginSuppressUndo()
         self.rtc.BeginParagraphSpacing(0, 20)
 
@@ -101,7 +105,7 @@ class WxgccFrame(wx.Frame):
 	self.rtc.WriteText("{")
         self.rtc.Newline()
 
-	self.rtc.WriteText("printf(\"Hello WxGcc !\\n\");")
+	self.rtc.WriteText("printf(\"Hello C !\\n\");")
 	self.rtc.BeginLeftIndent(60)
         self.rtc.Newline()
 
@@ -118,6 +122,9 @@ class WxgccFrame(wx.Frame):
     def InitCpp(self):
         self.rtc.Freeze()
 
+	self.rtc.SetBackgroundColour((225,225,248))
+	self.log.SetBackgroundColour((225,225,248))
+
         self.rtc.BeginSuppressUndo()
         self.rtc.BeginParagraphSpacing(0, 20)
 
@@ -130,7 +137,7 @@ class WxgccFrame(wx.Frame):
         self.rtc.WriteText("{")
         self.rtc.Newline()
 
-        self.rtc.WriteText("std::cout << \"Hello WxGcc !\\n\";")
+        self.rtc.WriteText("std::cout << \"Hello C++ !\\n\";")
         self.rtc.BeginLeftIndent(60)
         self.rtc.Newline()
 
@@ -151,11 +158,13 @@ class WxgccFrame(wx.Frame):
 	self.rtc.Clear()
 	self.InitC()
 	self.FileFlag = 0
+	self.SetTitle("[Untitled C File] - WxGcc")
 
     def OnNewCpp(self, evt):
 	self.rtc.Clear()
 	self.InitCpp()
 	self.FileFlag = 1
+	self.SetTitle("[Untitled C++ File] - WxGcc")
 
     def OnFileOpen(self, evt):
         # This gives us a string suitable for the file dialog based on
@@ -389,32 +398,34 @@ class WxgccFrame(wx.Frame):
         dlg.Destroy()
 
     def OnRun(self, evt):
-        os.system("rm -rf /tmp/foo* > /dev/null 2>&1")
 	#get file suffix
 	if self.FileFlag == 0:
-		FilePath = BinPath + ".c"
 		CC = "gcc"
+		FilePath = BinPath + ".c"
 	else:
-		FilePath = BinPath + ".cpp"
 		CC = "g++"
-        #save file
-        self.rtc.SaveFile(FilePath, 1);
-	self.SetTitle("[" + FilePath + "] - WxGcc")
-        #run binary
-        os.system(CC + " " + FilePath + " -o " + BinPath + " > " + LogPath + " 2>&1")
+		FilePath = BinPath + ".cpp"
 
-        #get result log
-        if os.path.isfile(BinPath):
-            os.system(BinPath + " > " + ResPath + " 2>&1")
-            info = os.popen("cat " + ResPath).read()
-            self.log.SetDefaultStyle(wx.TextAttr("black",wx.NullColor))
-        #get error log
-        else:
-            info = os.popen("cat " + LogPath).read()
-            self.log.SetDefaultStyle(wx.TextAttr("red",wx.NullColor))
-        date = os.popen("date").read()
-        self.log.SetValue("************ Time: " + date.split(" ")[4] + " ************\n")
-        self.log.AppendText(info + "\n")
+	os.system("rm -rf /tmp/foo* > /dev/null 2>&1")
+
+	#save file
+	self.rtc.SaveFile(FilePath, 1);
+	#self.SetTitle("[" + FilePath + "] - WxGcc")
+	#run binary
+	os.system(CC + " " + FilePath + " -o " + BinPath + " > " + LogPath + " 2>&1")
+
+	#get result log
+	if os.path.isfile(BinPath):
+		os.system(BinPath + " > " + ResPath + " 2>&1")
+		info = os.popen("cat " + ResPath).read()
+		self.log.SetDefaultStyle(wx.TextAttr("black",wx.NullColor))
+	#get error log
+	else:
+		info = os.popen("cat " + LogPath).read()
+		self.log.SetDefaultStyle(wx.TextAttr("red",wx.NullColor))
+	date = os.popen("date").read()
+	self.log.SetValue("************ Time: " + date.split(" ")[4] + " ************\n")
+	self.log.AppendText(info + "\n")
 
     def OnAbout(self, evt):
         # First we create and fill the info object
