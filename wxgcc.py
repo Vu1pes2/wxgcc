@@ -182,6 +182,16 @@ class WxgccFrame(wx.Frame):
                 ##fileType = types[dlg.GetFilterIndex()]
                 self.rtc.LoadFile(path, fileType)
 		self.SetTitle("[" + path + "] - WxGcc")
+		if path.split('.')[-1] == 'c':
+			self.FileFlag = 0
+			self.log.Clear()
+			self.rtc.SetBackgroundColour((207,247,207))
+			self.log.SetBackgroundColour((207,247,207))
+		else:
+			self.FileFlag = 1
+			self.log.Clear()
+			self.rtc.SetBackgroundColour((207,207,247))
+			self.log.SetBackgroundColour((207,207,247))
         dlg.Destroy()
 
         
