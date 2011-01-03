@@ -39,6 +39,7 @@ You should have received a copy of the GNU General Public License along with thi
 class WxgccFrame(wx.Frame):
     def __init__(self, parent, id=-1):
         wx.Frame.__init__(self, parent, wx.ID_ANY, title='wxPython GCC ToolKit 1.5', size=(800, 600), style = wx.DEFAULT_FRAME_STYLE)
+        self.Bind(wx.EVT_CLOSE, self.OnFrameClose)
 
         # set the frame icon
         self.SetIcon(wx.Icon('./icon/wxgcc.ico', wx.BITMAP_TYPE_ICO))
@@ -64,6 +65,8 @@ class WxgccFrame(wx.Frame):
         self.rtc = rt.RichTextCtrl(self.panel, style=wx.VSCROLL|wx.HSCROLL|wx.NO_BORDER, size=(-1,300));
         wx.CallAfter(self.rtc.SetFocus)
         self.InitC()
+        self.rtc.SetFilename("")
+        self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
 
         # for detail: http://docs.wxwidgets.org/stable/wx_wxauipaneinfo.html
         self.mgr.AddPane(self.rtc,
@@ -163,22 +166,43 @@ class WxgccFrame(wx.Frame):
         wx.MessageBox(evt.GetString(), "URL Clicked")
         
     def OnNewC(self, evt):
-        self.rtc.Clear()
-        self.log.Clear()
-        self.InitC()
-        self.FileFlag = 0
-        titleTxt = "[Untitled C File] - WxGcc"
-        wx.CallAfter(self.UpdateTitle, titleTxt)
-        #wx.CallAfter(self.UpdateStatus, "")
+        if self.WarningDlg(evt):
+            self.rtc.Clear()
+            self.log.Clear()
+            self.InitC()
+            self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
+            self.FileFlag = 0
+            self.rtc.SetFilename("")
+            titleTxt = "[Untitled C File] - WxGcc"
+            wx.CallAfter(self.UpdateTitle, titleTxt)
+            #wx.CallAfter(self.UpdateStatus, "")
 
     def OnNewCpp(self, evt):
-        self.rtc.Clear()
-        self.log.Clear()
-        self.InitCpp()
-        self.FileFlag = 1
-        titleTxt = "[Untitled C++ File] - WxGcc"
-        wx.CallAfter(self.UpdateTitle, titleTxt)
-        #wx.CallAfter(self.UpdateStatus, "New C++ file")
+        if self.WarningDlg(evt):
+            self.rtc.Clear()
+            self.log.Clear()
+            self.InitCpp()
+            self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
+            self.FileFlag = 1
+            self.rtc.SetFilename("")
+            titleTxt = "[Untitled C++ File] - WxGcc"
+            wx.CallAfter(self.UpdateTitle, titleTxt)
+            #wx.CallAfter(self.UpdateStatus, "New C++ file")
+
+    def WarningDlg(self, evt):
+        path = self.rtc.GetFilename()
+        FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
+
+        if FileTxt != self.FileTxt: 
+            if not path or self.rtc.IsModified():
+                dlg = wx.MessageDialog(self, "Do you want to save the file ?", "Warning", wx.YES_NO | wx.YES_DEFAULT | wx.CANCEL | wx.ICON_QUESTION)
+                warnFlag = dlg.ShowModal()
+                if warnFlag == wx.ID_YES:
+                    self.OnFileSave(evt)
+                    return True
+                elif warnFlag == wx.ID_CANCEL:
+                    return False
+        return True
 
     def OnFileOpen(self, evt):
         # This gives us a string suitable for the file dialog based on
@@ -194,6 +218,7 @@ class WxgccFrame(wx.Frame):
                 #fileType = types[dlg.GetFilterIndex()]
 
                 self.rtc.LoadFile(path, fileType)
+                self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
                 titleTxt = "[" + path + "] - WxGcc"
                 wx.CallAfter(self.UpdateTitle, titleTxt)
 
@@ -269,7 +294,12 @@ class WxgccFrame(wx.Frame):
         handler.DeleteTemporaryImages()
     
     def OnFileExit(self, evt):
-        self.Close(True)
+        if self.WarningDlg(evt):
+            self.Close(True)
+
+    def OnFrameClose(self, evt):
+        if self.WarningDlg(evt):
+            self.Destroy()
       
     def OnBold(self, evt):
         self.rtc.ApplyBoldToSelection()
