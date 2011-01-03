@@ -27,7 +27,9 @@ TmpLog = "/tmp/foo.log"
 TmpRes = "/tmp/foo.res"
 
 ID_MB_RUN = 1001
-ID_TB_RUN = 1002
+ID_MB_IMG = 1002
+ID_TB_RUN = 1003
+ID_TB_IMG = 1004
 
 licenseText = """
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -181,6 +183,7 @@ class WxgccFrame(wx.Frame):
             titleTxt = "[Untitled Txt File] - WxGcc"
             wx.CallAfter(self.UpdateTitle, titleTxt)
             self.CtrlRunBars(False)
+            self.CtrlImgBars(True)
         
     def OnNewC(self, evt):
         if self.WarningDlg(evt):
@@ -195,6 +198,7 @@ class WxgccFrame(wx.Frame):
             wx.CallAfter(self.UpdateTitle, titleTxt)
             #wx.CallAfter(self.UpdateStatus, "")
             self.CtrlRunBars(True)
+            self.CtrlImgBars(False)
 
     def OnNewCpp(self, evt):
         if self.WarningDlg(evt):
@@ -209,6 +213,7 @@ class WxgccFrame(wx.Frame):
             wx.CallAfter(self.UpdateTitle, titleTxt)
             #wx.CallAfter(self.UpdateStatus, "New C++ file")
             self.CtrlRunBars(True)
+            self.CtrlImgBars(False)
 
     def WarningDlg(self, evt):
         path = self.rtc.GetFilename()
@@ -235,9 +240,7 @@ class WxgccFrame(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             if path:
-
                 #fileType = types[dlg.GetFilterIndex()]
-
                 self.rtc.LoadFile(path, fileType)
                 self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
                 titleTxt = "[" + path + "] - WxGcc"
@@ -249,18 +252,21 @@ class WxgccFrame(wx.Frame):
                     self.rtc.SetBackgroundColour((207,247,207))
                     self.log.SetBackgroundColour((207,247,207))
                     self.CtrlRunBars(True)
+                    self.CtrlImgBars(False)
                 elif path.split('.')[-1] == 'cpp':
                     self.FileFlag = 2
                     self.log.Clear()
                     self.rtc.SetBackgroundColour((207,207,247))
                     self.log.SetBackgroundColour((207,207,247))
                     self.CtrlRunBars(True)
+                    self.CtrlImgBars(False)
                 else:
                     self.FileFlag = 0
                     self.log.Clear()
                     self.rtc.SetBackgroundColour((255,255,255))
                     self.log.SetBackgroundColour((255,255,255))
                     self.CtrlRunBars(False)
+                    self.CtrlImgBars(True)
 
         dlg.Destroy()
         
@@ -482,6 +488,15 @@ class WxgccFrame(wx.Frame):
                     attr.SetFlags(rt.TEXT_ATTR_TEXT_COLOUR)
                     attr.SetTextColour(colour)
                     self.rtc.SetStyle(r, attr)
+        dlg.Destroy()
+
+    def OnImg(self, evt):
+        wildcard = "Images (*.jpg;*.png;*.gif;*.bmp)|*.jpg;*.png;*.gif;*.bmp"
+        dlg = wx.FileDialog(self, "Choose a image", wildcard=wildcard, style=wx.OPEN)
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            if path:
+                self.rtc.WriteImage(wx.Image(path, wx.BITMAP_TYPE_ANY))
         dlg.Destroy()
 
     def OnRun(self, evt):
@@ -780,7 +795,8 @@ class WxgccFrame(wx.Frame):
         doBind( toolMenu.Append(-1, "&Find...\tCtrl+F"), self.OnShowFind )
         doBind( toolMenu.Append(-1, "&Replace...\tCtrl+R"), self.OnShowReplace )
         toolMenu.AppendSeparator()
-        doBind( toolMenu.Append(ID_MB_RUN, "&Run\tF11"), self.OnRun)
+        doBind( toolMenu.Append(ID_MB_IMG, "&Insert Images\tCtrl+M", "Insert images"), self.OnImg)
+        doBind( toolMenu.Append(ID_MB_RUN, "&Run\tF11", "Compile and run C/C++ files"), self.OnRun)
 
         helpMenu = wx.Menu()
         doBind( helpMenu.Append(-1, "&About"), self.OnAbout)
@@ -826,6 +842,7 @@ class WxgccFrame(wx.Frame):
         doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/font.png"),  shortHelpString="Font"), self.OnFont)
         doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/colour.png"), shortHelpString="Font Colour"), self.OnColour)
         self.tbar.AddSeparator()
+        doBind( self.tbar.AddTool(ID_TB_IMG, wx.Bitmap("./icon/img.png"), shortHelpString="Insert Images"), self.OnImg)
         doBind( self.tbar.AddTool(ID_TB_RUN, wx.Bitmap("./icon/run.png"), shortHelpString="Run"), self.OnRun)
         self.tbar.AddSeparator()
         doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/find.png"), shortHelpString="Find"), self.OnShowFind)
@@ -844,6 +861,11 @@ class WxgccFrame(wx.Frame):
     def CtrlRunBars(self, flag):
         self.mb.Enable(ID_MB_RUN, flag)
         self.tbar.EnableTool(ID_TB_RUN, flag)
+
+    def CtrlImgBars(self, flag):
+        self.mb.Enable(ID_MB_IMG, flag)
+        self.tbar.EnableTool(ID_TB_IMG, flag)
+
             
 
 #----------------------------------------------------------------------
