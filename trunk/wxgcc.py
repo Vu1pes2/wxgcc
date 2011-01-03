@@ -173,6 +173,7 @@ class WxgccFrame(wx.Frame):
             self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
             self.FileFlag = 0
             self.rtc.SetFilename("")
+            self.rtc.SetInsertionPointEnd()
             titleTxt = "[Untitled C File] - WxGcc"
             wx.CallAfter(self.UpdateTitle, titleTxt)
             #wx.CallAfter(self.UpdateStatus, "")
@@ -185,6 +186,7 @@ class WxgccFrame(wx.Frame):
             self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
             self.FileFlag = 1
             self.rtc.SetFilename("")
+            self.rtc.SetInsertionPointEnd()
             titleTxt = "[Untitled C++ File] - WxGcc"
             wx.CallAfter(self.UpdateTitle, titleTxt)
             #wx.CallAfter(self.UpdateStatus, "New C++ file")
