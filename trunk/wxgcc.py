@@ -15,7 +15,6 @@
 # * Multi-tab supported for compile multi-files 
 # * High light for C code source
 # * Line numbers support
-# * Search/Replace functions for rich text edit 
 
 import os
 import wx
@@ -38,12 +37,12 @@ You should have received a copy of the GNU General Public License along with thi
 #----------------------------------------------------------------------
 
 class WxgccFrame(wx.Frame):
-    #def __init__(self, *args, **kw):
-    #    wx.Frame.__init__(self, *args, **kw)
     def __init__(self, parent, id=-1):
         wx.Frame.__init__(self, parent, wx.ID_ANY, title='wxPython GCC ToolKit 1.5', size=(800, 600), style = wx.DEFAULT_FRAME_STYLE)
+
         # set the frame icon
         self.SetIcon(wx.Icon('./icon/wxgcc.ico', wx.BITMAP_TYPE_ICO))
+
         # set the window center
         self.Center()
 
@@ -56,17 +55,17 @@ class WxgccFrame(wx.Frame):
         self.MakeMenuBar()
         self.MakeToolBar()
         self.CreateStatusBar()
-        self.SetStatusText("Welcome to wxgcc 1.5 !")
+        #wx.CallAfter(self.UpdateStatus, "Welcome to wxgcc 1.5 !")
 
-	# create log box
-	self.log = wx.TextCtrl(self.panel, -1, style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL, size=(-1,200))
+        # create log box
+        self.log = wx.TextCtrl(self.panel, -1, style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL, size=(-1,200))
 
-	# create richText box: http://docs.wxwidgets.org/stable/wx_wxrichtextctrl.html
+        # create richText box and init: http://docs.wxwidgets.org/stable/wx_wxrichtextctrl.html
         self.rtc = rt.RichTextCtrl(self.panel, style=wx.VSCROLL|wx.HSCROLL|wx.NO_BORDER, size=(-1,300));
         wx.CallAfter(self.rtc.SetFocus)
-	self.InitC()
+        self.InitC()
 
-	# for detail: http://docs.wxwidgets.org/stable/wx_wxauipaneinfo.html
+        # for detail: http://docs.wxwidgets.org/stable/wx_wxauipaneinfo.html
         self.mgr.AddPane(self.rtc,
                          wx.aui.AuiPaneInfo().
                          CenterPane().BestSize((-1, 300)).
@@ -79,17 +78,27 @@ class WxgccFrame(wx.Frame):
                          wx.aui.AuiPaneInfo().
                          Bottom().BestSize((-1, 200)).
                          MinSize((-1, 100)).
+                         Gripper(True).
                          Floatable(False).
                          Caption("Log").
                          CloseButton(False).
                          Name("LogWin"))
         self.mgr.Update()
 
+        # add find/replace event
+        self.Bind(wx.EVT_FIND, self.OnFind)
+        self.Bind(wx.EVT_FIND_NEXT, self.OnFind)
+        self.Bind(wx.EVT_FIND_REPLACE, self.OnReplace)
+        self.Bind(wx.EVT_FIND_REPLACE_ALL, self.OnReplaceAll)
+        self.Bind(wx.EVT_FIND_CLOSE, self.OnFindClose)
+
     def InitC(self):
         self.rtc.Freeze()
 
-	self.rtc.SetBackgroundColour((207,247,207))
-	self.log.SetBackgroundColour((207,247,207))
+        self.rtc.SetBackgroundColour((207,247,207))
+        self.log.SetBackgroundColour((207,247,207))
+
+        # set text color
         #self.rtc.BeginTextColour((255,255,255))
 
         self.rtc.BeginSuppressUndo()
@@ -101,18 +110,18 @@ class WxgccFrame(wx.Frame):
         self.rtc.WriteText("int main()")
         self.rtc.Newline()
 
-	self.rtc.WriteText("{")
+        self.rtc.WriteText("{")
         self.rtc.Newline()
 
-	self.rtc.WriteText("printf(\"Hello C !\\n\");")
-	self.rtc.BeginLeftIndent(60)
+        self.rtc.WriteText("printf(\"Hello C !\\n\");")
+        self.rtc.BeginLeftIndent(60)
         self.rtc.Newline()
 
-	self.rtc.WriteText("return 0;")
-	self.rtc.Newline()
-	self.rtc.EndLeftIndent()
+        self.rtc.WriteText("return 0;")
+        self.rtc.Newline()
+        self.rtc.EndLeftIndent()
 
-	self.rtc.WriteText("}")
+        self.rtc.WriteText("}")
 
         self.rtc.EndParagraphSpacing()
         self.rtc.EndSuppressUndo()
@@ -121,8 +130,8 @@ class WxgccFrame(wx.Frame):
     def InitCpp(self):
         self.rtc.Freeze()
 
-	self.rtc.SetBackgroundColour((207,207,247))
-	self.log.SetBackgroundColour((207,207,247))
+        self.rtc.SetBackgroundColour((207,207,247))
+        self.log.SetBackgroundColour((207,207,247))
 
         self.rtc.BeginSuppressUndo()
         self.rtc.BeginParagraphSpacing(0, 20)
@@ -154,18 +163,22 @@ class WxgccFrame(wx.Frame):
         wx.MessageBox(evt.GetString(), "URL Clicked")
         
     def OnNewC(self, evt):
-	self.rtc.Clear()
-	self.log.Clear()
-	self.InitC()
-	self.FileFlag = 0
-	self.SetTitle("[Untitled C File] - WxGcc")
+        self.rtc.Clear()
+        self.log.Clear()
+        self.InitC()
+        self.FileFlag = 0
+        titleTxt = "[Untitled C File] - WxGcc"
+        wx.CallAfter(self.UpdateTitle, titleTxt)
+        #wx.CallAfter(self.UpdateStatus, "")
 
     def OnNewCpp(self, evt):
-	self.rtc.Clear()
-	self.log.Clear()
-	self.InitCpp()
-	self.FileFlag = 1
-	self.SetTitle("[Untitled C++ File] - WxGcc")
+        self.rtc.Clear()
+        self.log.Clear()
+        self.InitCpp()
+        self.FileFlag = 1
+        titleTxt = "[Untitled C++ File] - WxGcc"
+        wx.CallAfter(self.UpdateTitle, titleTxt)
+        #wx.CallAfter(self.UpdateStatus, "New C++ file")
 
     def OnFileOpen(self, evt):
         # This gives us a string suitable for the file dialog based on
@@ -173,33 +186,36 @@ class WxgccFrame(wx.Frame):
         ##wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=False)
         wildcard = "Files (*.c;*.cpp;*.txt)|*.c;*.cpp;*.txt"
         fileType = 1
-        dlg = wx.FileDialog(self, "Choose a filename",
-                            wildcard=wildcard,
-                            style=wx.OPEN)
+        dlg = wx.FileDialog(self, "Choose a filename", wildcard=wildcard, style=wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             if path:
-                ##fileType = types[dlg.GetFilterIndex()]
-                self.rtc.LoadFile(path, fileType)
-		self.SetTitle("[" + path + "] - WxGcc")
-		if path.split('.')[-1] == 'c':
-			self.FileFlag = 0
-			self.log.Clear()
-			self.rtc.SetBackgroundColour((207,247,207))
-			self.log.SetBackgroundColour((207,247,207))
-		else:
-			self.FileFlag = 1
-			self.log.Clear()
-			self.rtc.SetBackgroundColour((207,207,247))
-			self.log.SetBackgroundColour((207,207,247))
-        dlg.Destroy()
 
+                #fileType = types[dlg.GetFilterIndex()]
+
+                self.rtc.LoadFile(path, fileType)
+                titleTxt = "[" + path + "] - WxGcc"
+                wx.CallAfter(self.UpdateTitle, titleTxt)
+
+                if path.split('.')[-1] == 'c':
+                    self.FileFlag = 0
+                    self.log.Clear()
+                    self.rtc.SetBackgroundColour((207,247,207))
+                    self.log.SetBackgroundColour((207,247,207))
+                else:
+                    self.FileFlag = 1
+                    self.log.Clear()
+                    self.rtc.SetBackgroundColour((207,207,247))
+                    self.log.SetBackgroundColour((207,207,247))
+
+        dlg.Destroy()
         
     def OnFileSave(self, evt):
         path = self.rtc.GetFilename()
-	if path:
-		self.rtc.SaveFile(path, 1)
-		self.SetTitle("[" + path + "] - WxGcc")
+        if path:
+            self.rtc.SaveFile(path, 1)
+            titleTxt = "[" + path + "] - WxGcc"
+            wx.CallAfter(self.UpdateTitle, titleTxt)
         else:
             self.OnFileSaveAs(evt)
             return
@@ -208,20 +224,21 @@ class WxgccFrame(wx.Frame):
         ##wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=True)
         wildcard = "Files (*.c;*.cpp;*.txt)|*.c;*.cpp;*.txt"
         fileType = 1
-        dlg = wx.FileDialog(self, "Choose a filename",
-                            wildcard=wildcard,
-                            style=wx.SAVE)
+        dlg = wx.FileDialog(self, "Choose a filename", wildcard=wildcard, style=wx.SAVE)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             if path:
+
                 ##fileType = types[dlg.GetFilterIndex()]
                 ##ext = rt.RichTextBuffer.FindHandlerByType(fileType).GetExtension()
                 ##if not path.endswith(ext):
                 ##    path += '.' + ext
+
                 self.rtc.SaveFile(path, fileType)
-		self.SetTitle("[" + path + "] - WxGcc")
+                titleTxt = "[" + path + "] - WxGcc"
+                wx.CallAfter(self.UpdateTitle, titleTxt)
+
         dlg.Destroy()
-        
                 
     def OnFileViewHTML(self, evt):
         # Get an instance of the html file handler, use it to save the
@@ -409,34 +426,164 @@ class WxgccFrame(wx.Frame):
         dlg.Destroy()
 
     def OnRun(self, evt):
-	#get file suffix
-	if self.FileFlag == 0:
-		CC = "gcc"
-		FilePath = BinPath + ".c"
-	else:
-		CC = "g++"
-		FilePath = BinPath + ".cpp"
+        # get file suffix
+        if self.FileFlag == 0:
+            CC = "gcc"
+            FilePath = BinPath + ".c"
+        else:
+            CC = "g++"
+            FilePath = BinPath + ".cpp"
 
-	os.system("rm -rf /tmp/foo* > /dev/null 2>&1")
+        # delete old files
+        os.system("rm -rf /tmp/foo* > /dev/null 2>&1")
 
-	#save file
-	self.rtc.SaveFile(FilePath, 1);
-	#self.SetTitle("[" + FilePath + "] - WxGcc")
-	#run binary
-	os.system(CC + " " + FilePath + " -o " + BinPath + " > " + LogPath + " 2>&1")
+        # save file
+        self.rtc.SaveFile(FilePath, 1);
 
-	#get result log
-	if os.path.isfile(BinPath):
-		os.system(BinPath + " > " + ResPath + " 2>&1")
-		info = os.popen("cat " + ResPath).read()
-		self.log.SetDefaultStyle(wx.TextAttr("black",wx.NullColor))
-	#get error log
-	else:
-		info = os.popen("cat " + LogPath).read()
-		self.log.SetDefaultStyle(wx.TextAttr("red",wx.NullColor))
-	date = os.popen("date").read()
-	self.log.SetValue("************ Time: " + date.split(" ")[4] + " ************\n")
-	self.log.AppendText(info + "\n")
+        #run binary
+        os.system(CC + " " + FilePath + " -o " + BinPath + " > " + LogPath + " 2>&1")
+
+        # get result log
+        if os.path.isfile(BinPath):
+            os.system(BinPath + " > " + ResPath + " 2>&1")
+            info = os.popen("cat " + ResPath).read()
+            self.log.SetDefaultStyle(wx.TextAttr("black",wx.NullColor))
+
+        #get error log
+        else:
+            info = os.popen("cat " + LogPath).read()
+            self.log.SetDefaultStyle(wx.TextAttr("red",wx.NullColor))
+
+        date = os.popen("date").read()
+        self.log.SetValue("************ Time: " + date.split(" ")[4] + " ************\n")
+        self.log.AppendText(info + "\n")
+
+    def OnShowFind(self, evt):
+        data = wx.FindReplaceData()
+
+        # set down to end to find as defautl
+        data.SetFlags(wx.FR_DOWN) 
+
+        dlg = wx.FindReplaceDialog(self, data, "Find", wx.FR_NOMATCHCASE | wx.FR_NOWHOLEWORD)
+        dlg.data = data  # save a reference to it...
+        dlg.Show(True)
+
+    def OnShowReplace(self, evt):
+        data = wx.FindReplaceData()
+
+        # set down to end to find as defautl
+        data.SetFlags(wx.FR_DOWN) 
+
+        dlg = wx.FindReplaceDialog(self, data, "Replace", wx.FR_REPLACEDIALOG | wx.FR_NOMATCHCASE | wx.FR_NOWHOLEWORD)
+        dlg.data = data  # save a reference to it...
+        dlg.Show(True)
+
+    def OnFind(self, evt):
+        start = self.rtc.GetInsertionPoint()
+        end = self.rtc.GetLastPosition()
+
+        # case unsensitive
+        textStr = self.rtc.GetRange(0, end).lower()
+        findTxt = evt.GetFindString().lower()
+
+        # down to end to find
+        if evt.GetFlags() == 1:
+            loc = textStr.find(findTxt, start)
+
+        # up to beginning to find
+        else:
+            loc = textStr.rfind(findTxt, 0, start)
+
+        # not found and start at beginning
+        if loc == -1 and start != 0:
+            if evt.GetFlags() == 1:
+                loc = textStr.find(findTxt, 0)
+            else:
+                loc = textStr.rfind(findTxt, 0, end)
+
+        if loc == -1:
+            statusTxt = 'Not Found "' + findTxt + '"'
+            wx.CallAfter(self.UpdateStatus, statusTxt)
+        else:
+            self.rtc.ShowPosition(loc)
+            self.rtc.SetSelection(loc, loc + len(findTxt))
+
+
+    def OnReplace(self, evt):
+        start = self.rtc.GetInsertionPoint()
+        end = self.rtc.GetLastPosition()
+
+        # case sensitive
+        replaceTxt = evt.GetReplaceString()
+        findTxt = evt.GetFindString()
+        textStr = self.rtc.GetRange(0, end)
+
+        # down to end to find
+        if evt.GetFlags() == 1:
+            loc = textStr.find(findTxt, start)
+        # up to beginning to find
+        else:
+            loc = textStr.rfind(findTxt, 0, start)
+
+        # not found and start at beginning
+        if loc == -1 and start != 0:
+            if evt.GetFlags() == 1:
+                loc = textStr.find(findTxt, 0)
+            else:
+                loc = textStr.rfind(findTxt, 0, end)
+
+        if loc == -1:
+            statusTxt = 'Not Found "' + findTxt + '"'
+            wx.CallAfter(self.UpdateStatus, statusTxt)
+        else:
+            self.rtc.ShowPosition(loc)
+            self.rtc.SetSelection(loc, loc + len(findTxt))
+
+            # replace and select again
+            self.rtc.Replace(loc, loc + len(findTxt), replaceTxt)
+            self.rtc.SetSelection(loc, loc + len(replaceTxt))
+
+    def OnReplaceAll(self, evt):
+        count = 0
+        start = 0
+        flag = True
+
+        end = self.rtc.GetLastPosition()
+
+        # case sensitive
+        replaceTxt = evt.GetReplaceString()
+        findTxt = evt.GetFindString()
+
+        while flag:
+            # case sensitive, and textStr will change after replace 
+            textStr = self.rtc.GetRange(0, end)
+            loc = textStr.find(findTxt, start, end)
+            if loc == -1 or start >= end:
+                break
+            self.rtc.ShowPosition(loc)
+            self.rtc.SetSelection(loc, loc + len(findTxt))
+            self.rtc.Replace(loc, loc + len(findTxt), replaceTxt)
+            count += 1
+            start = loc + len(replaceTxt)
+
+            # after textStr changed, end need to be updated too
+            end = self.rtc.GetLastPosition()
+
+        if count > 0:
+             if count == 1:
+                 statusTxt = 'Total replaced ' + str(count) + ' time'
+             else:
+                 statusTxt = 'Total replaced ' + str(count) + ' times'
+             wx.CallAfter(self.UpdateStatus, statusTxt)
+        else:
+            statusTxt = 'Not Found "' + findTxt + '"'
+            wx.CallAfter(self.UpdateStatus, statusTxt)
+ 
+        # after finished replace, close itself
+        #evt.GetDialog().Destroy()
+
+    def OnFindClose(self, evt):
+        evt.GetDialog().Destroy()
 
     def OnAbout(self, evt):
         # First we create and fill the info object
@@ -490,7 +637,7 @@ class WxgccFrame(wx.Frame):
             
         fileMenu = wx.Menu()
         doBind( fileMenu.Append(-1, "&New C\tCtrl+N", "Create a C file"), self.OnNewC )
-        doBind( fileMenu.Append(-1, "&New C++\tCtrl+E", "Create a C++ file"), self.OnNewCpp )
+        doBind( fileMenu.Append(-1, "&New C++\tCtrl+P", "Create a C++ file"), self.OnNewCpp )
         doBind( fileMenu.Append(-1, "&Open\tCtrl+O", "Open a file"), self.OnFileOpen )
 	fileMenu.AppendSeparator()
         doBind( fileMenu.Append(-1, "&Save\tCtrl+S", "Save a file"), self.OnFileSave )
@@ -509,10 +656,6 @@ class WxgccFrame(wx.Frame):
         doBind( editMenu.Append(wx.ID_CLEAR, "&Delete\tDel"), self.ForwardEvent, self.ForwardEvent)
         editMenu.AppendSeparator()
         doBind( editMenu.Append(wx.ID_SELECTALL, "Select A&ll\tCtrl+A"), self.ForwardEvent, self.ForwardEvent )
-        
-        #doBind( editMenu.AppendSeparator(),  )
-        #doBind( editMenu.Append(-1, "&Find...\tCtrl+F"),  )
-        #doBind( editMenu.Append(-1, "&Replace...\tCtrl+R"),  )
 
         formatMenu = wx.Menu()
         doBind( formatMenu.AppendCheckItem(-1, "&Bold\tCtrl+B"), self.OnBold, self.OnUpdateBold)
@@ -535,18 +678,21 @@ class WxgccFrame(wx.Frame):
         formatMenu.AppendSeparator()
         doBind( formatMenu.Append(-1, "&Font..."), self.OnFont)
 
-	toolMenu = wx.Menu()
-	doBind( toolMenu.Append(-1, "&Run\tCtrl+R"), self.OnRun)
+        toolMenu = wx.Menu()
+        doBind( toolMenu.Append(-1, "&Find...\tCtrl+F"), self.OnShowFind )
+        doBind( toolMenu.Append(-1, "&Replace...\tCtrl+R"), self.OnShowReplace )
+        toolMenu.AppendSeparator()
+        doBind( toolMenu.Append(-1, "&Run\tF11"), self.OnRun)
 
-	helpMenu = wx.Menu()
-	doBind( helpMenu.Append(-1, "&About"), self.OnAbout)
+        helpMenu = wx.Menu()
+        doBind( helpMenu.Append(-1, "&About"), self.OnAbout)
         
         mb = wx.MenuBar()
         mb.Append(fileMenu, "&File")
         mb.Append(editMenu, "&Edit")
         mb.Append(formatMenu, "F&ormat")
-	mb.Append(toolMenu, "&Tool")
-	mb.Append(helpMenu, "&Help")
+        mb.Append(toolMenu, "&Tool")
+        mb.Append(helpMenu, "&Help")
         self.SetMenuBar(mb)
 
     def MakeToolBar(self):
@@ -556,8 +702,8 @@ class WxgccFrame(wx.Frame):
                 self.Bind(wx.EVT_UPDATE_UI, updateUI, item)
         
         tbar = self.CreateToolBar()
-	doBind( tbar.AddTool(-1, wx.Bitmap("./icon/c.png"), shortHelpString="New C"), self.OnNewC)
-	doBind( tbar.AddTool(-1, wx.Bitmap("./icon/cpp.png"), shortHelpString="New C++"), self.OnNewCpp)
+        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/c.png"), shortHelpString="New C"), self.OnNewC)
+        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/cpp.png"), shortHelpString="New C++"), self.OnNewCpp)
         tbar.AddSeparator()
         doBind( tbar.AddTool(-1, wx.Bitmap("./icon/open.png"), shortHelpString="Open"), self.OnFileOpen)
         doBind( tbar.AddTool(-1, wx.Bitmap("./icon/save.png"), shortHelpString="Save"), self.OnFileSave)
@@ -580,9 +726,17 @@ class WxgccFrame(wx.Frame):
         doBind( tbar.AddTool(-1, wx.Bitmap("./icon/colour.png"), shortHelpString="Font Colour"), self.OnColour)
         tbar.AddSeparator()
         doBind( tbar.AddTool(-1, wx.Bitmap("./icon/run.png"), shortHelpString="Run"), self.OnRun)
+        tbar.AddSeparator()
+        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/find.png"), shortHelpString="Find"), self.OnShowFind)
+        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/replace.png"), shortHelpString="Replace"), self.OnShowReplace)
 
         tbar.Realize()
 
+    def UpdateStatus(self, msg):
+        self.SetStatusText(msg)
+
+    def UpdateTitle(self, msg):
+        self.SetTitle(msg)
 #----------------------------------------------------------------------
 
 if __name__ == '__main__':
