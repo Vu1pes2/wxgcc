@@ -551,6 +551,9 @@ class WxgccFrame(wx.Frame):
         date = os.popen("date").read()
         self.log.SetValue("************ Time: " + date.split(" ")[4] + " ************\n")
         self.log.AppendText(info + "\n")
+        # update the title bar
+        titleTxt = "[" + FilePath + "] - WxGcc"
+        wx.CallAfter(self.UpdateTitle, titleTxt)
 
     def OnShowFind(self, evt):
         data = wx.FindReplaceData()
