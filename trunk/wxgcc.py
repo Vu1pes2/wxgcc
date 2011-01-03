@@ -26,6 +26,9 @@ BinPath = "/tmp/foo"
 LogPath = "/tmp/foo.log"
 ResPath = "/tmp/foo.res"
 
+ID_MB_RUN = 1001
+ID_TB_RUN = 1002
+
 licenseText = """
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
 
@@ -48,6 +51,7 @@ class WxgccFrame(wx.Frame):
         self.Center()
 
 	self.FileFlag = 0
+        self.FileTxt = ""
 	self.panel = wx.Panel(self, wx.ID_ANY)
 
         self.mgr = wx.aui.AuiManager()
@@ -64,9 +68,8 @@ class WxgccFrame(wx.Frame):
         # create richText box and init: http://docs.wxwidgets.org/stable/wx_wxrichtextctrl.html
         self.rtc = rt.RichTextCtrl(self.panel, style=wx.VSCROLL|wx.HSCROLL|wx.NO_BORDER, size=(-1,300));
         wx.CallAfter(self.rtc.SetFocus)
-        self.InitC()
+        #self.InitC()
         self.rtc.SetFilename("")
-        self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
 
         # for detail: http://docs.wxwidgets.org/stable/wx_wxauipaneinfo.html
         self.mgr.AddPane(self.rtc,
@@ -164,6 +167,20 @@ class WxgccFrame(wx.Frame):
 
     def OnURL(self, evt):
         wx.MessageBox(evt.GetString(), "URL Clicked")
+
+    def OnNew(self, evt):
+        if self.WarningDlg(evt):
+            self.rtc.Clear()
+            self.log.Clear()
+            self.rtc.SetBackgroundColour((255,255,255))
+            self.log.SetBackgroundColour((255,255,255))
+            self.FileTxt = ""
+            self.FileFlag = 0
+            self.rtc.SetFilename("")
+            self.rtc.SetInsertionPointEnd()
+            titleTxt = "[Untitled Txt File] - WxGcc"
+            wx.CallAfter(self.UpdateTitle, titleTxt)
+            self.CtrlRunBars(False)
         
     def OnNewC(self, evt):
         if self.WarningDlg(evt):
@@ -171,12 +188,13 @@ class WxgccFrame(wx.Frame):
             self.log.Clear()
             self.InitC()
             self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
-            self.FileFlag = 0
+            self.FileFlag = 1
             self.rtc.SetFilename("")
             self.rtc.SetInsertionPointEnd()
             titleTxt = "[Untitled C File] - WxGcc"
             wx.CallAfter(self.UpdateTitle, titleTxt)
             #wx.CallAfter(self.UpdateStatus, "")
+            self.CtrlRunBars(True)
 
     def OnNewCpp(self, evt):
         if self.WarningDlg(evt):
@@ -184,12 +202,13 @@ class WxgccFrame(wx.Frame):
             self.log.Clear()
             self.InitCpp()
             self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
-            self.FileFlag = 1
+            self.FileFlag = 2
             self.rtc.SetFilename("")
             self.rtc.SetInsertionPointEnd()
             titleTxt = "[Untitled C++ File] - WxGcc"
             wx.CallAfter(self.UpdateTitle, titleTxt)
             #wx.CallAfter(self.UpdateStatus, "New C++ file")
+            self.CtrlRunBars(True)
 
     def WarningDlg(self, evt):
         path = self.rtc.GetFilename()
@@ -225,15 +244,23 @@ class WxgccFrame(wx.Frame):
                 wx.CallAfter(self.UpdateTitle, titleTxt)
 
                 if path.split('.')[-1] == 'c':
-                    self.FileFlag = 0
+                    self.FileFlag = 1
                     self.log.Clear()
                     self.rtc.SetBackgroundColour((207,247,207))
                     self.log.SetBackgroundColour((207,247,207))
-                else:
-                    self.FileFlag = 1
+                    self.CtrlRunBars(True)
+                elif path.split('.')[-1] == 'cpp':
+                    self.FileFlag = 2
                     self.log.Clear()
                     self.rtc.SetBackgroundColour((207,207,247))
                     self.log.SetBackgroundColour((207,207,247))
+                    self.CtrlRunBars(True)
+                else:
+                    self.FileFlag = 0
+                    self.log.Clear()
+                    self.rtc.SetBackgroundColour((255,255,255))
+                    self.log.SetBackgroundColour((255,255,255))
+                    self.CtrlRunBars(False)
 
         dlg.Destroy()
         
@@ -459,10 +486,10 @@ class WxgccFrame(wx.Frame):
 
     def OnRun(self, evt):
         # get file suffix
-        if self.FileFlag == 0:
+        if self.FileFlag == 1:
             CC = "gcc"
             FilePath = BinPath + ".c"
-        else:
+        elif self.FileFlag == 2:
             CC = "g++"
             FilePath = BinPath + ".cpp"
 
@@ -668,6 +695,7 @@ class WxgccFrame(wx.Frame):
                 self.Bind(wx.EVT_UPDATE_UI, updateUI, item)
             
         fileMenu = wx.Menu()
+        doBind( fileMenu.Append(-1, "&New \tCtrl+T", "Create a Txt file"), self.OnNew )
         doBind( fileMenu.Append(-1, "&New C\tCtrl+N", "Create a C file"), self.OnNewC )
         doBind( fileMenu.Append(-1, "&New C++\tCtrl+P", "Create a C++ file"), self.OnNewCpp )
         doBind( fileMenu.Append(-1, "&Open\tCtrl+O", "Open a file"), self.OnFileOpen )
@@ -714,18 +742,20 @@ class WxgccFrame(wx.Frame):
         doBind( toolMenu.Append(-1, "&Find...\tCtrl+F"), self.OnShowFind )
         doBind( toolMenu.Append(-1, "&Replace...\tCtrl+R"), self.OnShowReplace )
         toolMenu.AppendSeparator()
-        doBind( toolMenu.Append(-1, "&Run\tF11"), self.OnRun)
+        doBind( toolMenu.Append(ID_MB_RUN, "&Run\tF11"), self.OnRun)
 
         helpMenu = wx.Menu()
         doBind( helpMenu.Append(-1, "&About"), self.OnAbout)
         
-        mb = wx.MenuBar()
-        mb.Append(fileMenu, "&File")
-        mb.Append(editMenu, "&Edit")
-        mb.Append(formatMenu, "F&ormat")
-        mb.Append(toolMenu, "&Tool")
-        mb.Append(helpMenu, "&Help")
-        self.SetMenuBar(mb)
+        self.mb = wx.MenuBar()
+        self.mb.Append(fileMenu, "&File")
+        self.mb.Append(editMenu, "&Edit")
+        self.mb.Append(formatMenu, "F&ormat")
+        self.mb.Append(toolMenu, "&Tool")
+        self.mb.Append(helpMenu, "&Help")
+        self.SetMenuBar(self.mb)
+
+        self.mb.Enable(ID_MB_RUN, False)
 
     def MakeToolBar(self):
         def doBind(item, handler, updateUI=None):
@@ -733,42 +763,51 @@ class WxgccFrame(wx.Frame):
             if updateUI is not None:
                 self.Bind(wx.EVT_UPDATE_UI, updateUI, item)
         
-        tbar = self.CreateToolBar()
-        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/c.png"), shortHelpString="New C"), self.OnNewC)
-        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/cpp.png"), shortHelpString="New C++"), self.OnNewCpp)
-        tbar.AddSeparator()
-        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/open.png"), shortHelpString="Open"), self.OnFileOpen)
-        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/save.png"), shortHelpString="Save"), self.OnFileSave)
-        tbar.AddSeparator()
-        doBind( tbar.AddTool(wx.ID_UNDO, wx.Bitmap("./icon/undo.png"), shortHelpString="Undo"), self.ForwardEvent, self.ForwardEvent)
-        doBind( tbar.AddTool(wx.ID_REDO, wx.Bitmap("./icon/redo.png"), shortHelpString="Redo"), self.ForwardEvent, self.ForwardEvent)
-        tbar.AddSeparator()
-        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/bold.png"), isToggle=True, shortHelpString="Bold"), self.OnBold, self.OnUpdateBold)
-        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/italic.png"), isToggle=True, shortHelpString="Italic"), self.OnItalic, self.OnUpdateItalic)
-        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/underline.png"), isToggle=True, shortHelpString="Underline"), self.OnUnderline, self.OnUpdateUnderline)
-        tbar.AddSeparator()
-        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/left.png"), isToggle=True, shortHelpString="Align Left"), self.OnAlignLeft, self.OnUpdateAlignLeft)
-        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/center.png"), isToggle=True, shortHelpString="Center"), self.OnAlignCenter, self.OnUpdateAlignCenter)
-        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/right.png"), isToggle=True, shortHelpString="Align Right"), self.OnAlignRight, self.OnUpdateAlignRight)
-        tbar.AddSeparator()
-        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/indent-less.png"), shortHelpString="Indent Less"), self.OnIndentLess)
-        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/indent-more.png"), shortHelpString="Indent More"), self.OnIndentMore)
-        tbar.AddSeparator()
-        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/font.png"),  shortHelpString="Font"), self.OnFont)
-        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/colour.png"), shortHelpString="Font Colour"), self.OnColour)
-        tbar.AddSeparator()
-        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/run.png"), shortHelpString="Run"), self.OnRun)
-        tbar.AddSeparator()
-        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/find.png"), shortHelpString="Find"), self.OnShowFind)
-        doBind( tbar.AddTool(-1, wx.Bitmap("./icon/replace.png"), shortHelpString="Replace"), self.OnShowReplace)
+        self.tbar = self.CreateToolBar()
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/new.png"), shortHelpString="New Txt"), self.OnNew)
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/c.png"), shortHelpString="New C"), self.OnNewC)
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/cpp.png"), shortHelpString="New C++"), self.OnNewCpp)
+        self.tbar.AddSeparator()
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/open.png"), shortHelpString="Open"), self.OnFileOpen)
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/save.png"), shortHelpString="Save"), self.OnFileSave)
+        self.tbar.AddSeparator()
+        doBind( self.tbar.AddTool(wx.ID_UNDO, wx.Bitmap("./icon/undo.png"), shortHelpString="Undo"), self.ForwardEvent, self.ForwardEvent)
+        doBind( self.tbar.AddTool(wx.ID_REDO, wx.Bitmap("./icon/redo.png"), shortHelpString="Redo"), self.ForwardEvent, self.ForwardEvent)
+        self.tbar.AddSeparator()
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/bold.png"), isToggle=True, shortHelpString="Bold"), self.OnBold, self.OnUpdateBold)
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/italic.png"), isToggle=True, shortHelpString="Italic"), self.OnItalic, self.OnUpdateItalic)
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/underline.png"), isToggle=True, shortHelpString="Underline"), self.OnUnderline, self.OnUpdateUnderline)
+        self.tbar.AddSeparator()
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/left.png"), isToggle=True, shortHelpString="Align Left"), self.OnAlignLeft, self.OnUpdateAlignLeft)
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/center.png"), isToggle=True, shortHelpString="Center"), self.OnAlignCenter, self.OnUpdateAlignCenter)
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/right.png"), isToggle=True, shortHelpString="Align Right"), self.OnAlignRight, self.OnUpdateAlignRight)
+        self.tbar.AddSeparator()
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/indent-less.png"), shortHelpString="Indent Less"), self.OnIndentLess)
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/indent-more.png"), shortHelpString="Indent More"), self.OnIndentMore)
+        self.tbar.AddSeparator()
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/font.png"),  shortHelpString="Font"), self.OnFont)
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/colour.png"), shortHelpString="Font Colour"), self.OnColour)
+        self.tbar.AddSeparator()
+        doBind( self.tbar.AddTool(ID_TB_RUN, wx.Bitmap("./icon/run.png"), shortHelpString="Run"), self.OnRun)
+        self.tbar.AddSeparator()
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/find.png"), shortHelpString="Find"), self.OnShowFind)
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/replace.png"), shortHelpString="Replace"), self.OnShowReplace)
 
-        tbar.Realize()
+        self.tbar.Realize()
+
+        self.tbar.EnableTool(ID_TB_RUN, False)
 
     def UpdateStatus(self, msg):
         self.SetStatusText(msg)
 
     def UpdateTitle(self, msg):
         self.SetTitle(msg)
+
+    def CtrlRunBars(self, flag):
+        self.mb.Enable(ID_MB_RUN, flag)
+        self.tbar.EnableTool(ID_TB_RUN, flag)
+            
+
 #----------------------------------------------------------------------
 
 if __name__ == '__main__':
