@@ -22,9 +22,9 @@ import wx.aui
 import wx.richtext as rt
 from wx.lib.wordwrap import wordwrap
 
-BinPath = "/tmp/foo"
-LogPath = "/tmp/foo.log"
-ResPath = "/tmp/foo.res"
+TmpBin = "/tmp/foo"
+TmpLog = "/tmp/foo.log"
+TmpRes = "/tmp/foo.res"
 
 ID_MB_RUN = 1001
 ID_TB_RUN = 1002
@@ -485,34 +485,69 @@ class WxgccFrame(wx.Frame):
         dlg.Destroy()
 
     def OnRun(self, evt):
-        # get file suffix
-        if self.FileFlag == 1:
-            CC = "gcc"
-            FilePath = BinPath + ".c"
-        elif self.FileFlag == 2:
-            CC = "g++"
-            FilePath = BinPath + ".cpp"
+        # compile the exist file in its same directory
+        if self.rtc.GetFilename():
+            FilePath = self.rtc.GetFilename().encode("utf-8")
+            FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
 
-        # delete old files
-        os.system("rm -rf /tmp/foo* > /dev/null 2>&1")
+            # get binary file path
+            if self.FileFlag == 1:
+                CC = "gcc"
+                BinPath = FilePath[0:-2]
+            elif self.FileFlag == 2:
+                CC = "g++"
+                BinPath = FilePath[0:-4]
 
-        # save file
-        self.rtc.SaveFile(FilePath, 1);
+            # delete the old binary file if exist
+            os.system("rm -rf " + BinPath + " > /dev/null 2>&1")
 
-        #run binary
-        os.system(CC + " " + FilePath + " -o " + BinPath + " > " + LogPath + " 2>&1")
+            # if text have changed, save first befor compile
+            if FileTxt != self.FileTxt:
+                self.rtc.SaveFile(FilePath, 1)
 
-        # get result log
-        if os.path.isfile(BinPath):
-            os.system(BinPath + " > " + ResPath + " 2>&1")
-            info = os.popen("cat " + ResPath).read()
-            self.log.SetDefaultStyle(wx.TextAttr("black",wx.NullColor))
+            os.system(CC + " " + FilePath + " -o " + BinPath + " > " + TmpLog + " 2>&1")
 
-        #get error log
+            # get run log if compile success
+            if os.path.isfile(BinPath):
+                os.system(BinPath + " > " + TmpRes + " 2>&1")
+                info = os.popen("cat " + TmpRes).read()
+                self.log.SetDefaultStyle(wx.TextAttr("black",wx.NullColor))
+
+            # get build log if compile failed
+            else:
+                info = os.popen("cat " + TmpLog).read()
+                self.log.SetDefaultStyle(wx.TextAttr("red",wx.NullColor))
+
+        # compile an untitled file
         else:
-            info = os.popen("cat " + LogPath).read()
-            self.log.SetDefaultStyle(wx.TextAttr("red",wx.NullColor))
+            # get tmp source file path
+            if self.FileFlag == 1:
+                CC = "gcc"
+                FilePath = TmpBin + ".c"
+            elif self.FileFlag == 2:
+                CC = "g++"
+                FilePath = TmpBin + ".cpp"
 
+            # delete old tmp files
+            os.system("rm -rf /tmp/foo* > /dev/null 2>&1")
+
+            # save file
+            self.rtc.SaveFile(FilePath, 1)
+
+            os.system(CC + " " + FilePath + " -o " + TmpBin + " > " + TmpLog + " 2>&1")
+
+            # get run log if compile success
+            if os.path.isfile(TmpBin):
+                os.system(TmpBin + " > " + TmpRes + " 2>&1")
+                info = os.popen("cat " + TmpRes).read()
+                self.log.SetDefaultStyle(wx.TextAttr("black",wx.NullColor))
+
+            #get build log if compile failed
+            else:
+                info = os.popen("cat " + TmpLog).read()
+                self.log.SetDefaultStyle(wx.TextAttr("red",wx.NullColor))
+
+        # write log to log panel with timestamp
         date = os.popen("date").read()
         self.log.SetValue("************ Time: " + date.split(" ")[4] + " ************\n")
         self.log.AppendText(info + "\n")
