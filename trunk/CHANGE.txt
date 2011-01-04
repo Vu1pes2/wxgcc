@@ -1,0 +1,30 @@
+===============================================
+
+V1.5 
+
+Updates:
+  * add Txt, C, C++ formats support
+  * add find/replace support
+  * add image insert support
+  * show warning dialog to save when exit program
+  * add file type judgement when open
+  * add new icons to replace the images.py
+  * fix the save(as) bug, and update title info
+  * fix the scroll bug of log panel
+
+Features:
+  * set different background colour for Txt(white), C(green) and C++(blue)
+  * set default code when create C/C++
+  * set case sencetive for replace but not for find
+  * set the curse to the end after open/create file
+  * compile C/C++ file in its same dir if path exist (in /tmp dir if untitled)
+  * update hotkeys
+
+===============================================
+
+V1.0
+
+Features:
+  * rich text edit support
+  * C program compile support
+
