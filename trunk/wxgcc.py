@@ -219,15 +219,14 @@ class WxgccFrame(wx.Frame):
         path = self.rtc.GetFilename()
         FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
 
-        if FileTxt != self.FileTxt: 
-            if not path or self.rtc.IsModified():
-                dlg = wx.MessageDialog(self, "Do you want to save the file ?", "Warning", wx.YES_NO | wx.YES_DEFAULT | wx.CANCEL | wx.ICON_QUESTION)
-                warnFlag = dlg.ShowModal()
-                if warnFlag == wx.ID_YES:
-                    self.OnFileSave(evt)
-                    return True
-                elif warnFlag == wx.ID_CANCEL:
-                    return False
+        if FileTxt != self.FileTxt:
+            dlg = wx.MessageDialog(self, "Do you want to save the file ?", "Warning", wx.YES_NO | wx.YES_DEFAULT | wx.CANCEL | wx.ICON_QUESTION)
+            warnFlag = dlg.ShowModal()
+            if warnFlag == wx.ID_YES:
+                self.OnFileSave(evt)
+                return True
+            elif warnFlag == wx.ID_CANCEL:
+                return False
         return True
 
     def OnFileOpen(self, evt):
@@ -502,74 +501,45 @@ class WxgccFrame(wx.Frame):
 
     def OnRun(self, evt):
         # compile the exist file in its same directory
+        OrigFilePath = ""
         if self.rtc.GetFilename():
-            FilePath = self.rtc.GetFilename().encode("utf-8")
-            FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
+            OrigFilePath = self.rtc.GetFilename() #.encode("utf-8")
 
-            # get binary file path
-            if self.FileFlag == 1:
-                CC = "gcc"
-                BinPath = FilePath[0:-2]
-            elif self.FileFlag == 2:
-                CC = "g++"
-                BinPath = FilePath[0:-4]
+        # get tmp source file path
+        if self.FileFlag == 1:
+            CC = "gcc"
+            FilePath = TmpBin + ".c"
+        elif self.FileFlag == 2:
+            CC = "g++"
+            FilePath = TmpBin + ".cpp"
 
-            # delete the old binary file if exist
-            os.system("rm -rf " + BinPath + " > /dev/null 2>&1")
+        # delete old tmp files
+        os.system("rm -rf /tmp/foo* > /dev/null 2>&1")
 
-            # if text have changed, save first befor compile
-            if FileTxt != self.FileTxt:
-                self.rtc.SaveFile(FilePath, 1)
+        # save file
+        self.rtc.SaveFile(FilePath, 1)
 
-            os.system(CC + " " + FilePath + " -o " + BinPath + " > " + TmpLog + " 2>&1")
+        os.system(CC + " " + FilePath + " -o " + TmpBin + " > " + TmpLog + " 2>&1")
 
-            # get run log if compile success
-            if os.path.isfile(BinPath):
-                os.system(BinPath + " > " + TmpRes + " 2>&1")
-                info = os.popen("cat " + TmpRes).read()
-                self.log.SetDefaultStyle(wx.TextAttr("black",wx.NullColor))
+        # recover to the orig file path if compile an exist file
+        if OrigFilePath:
+            self.rtc.SetFilename(OrigFilePath)
 
-            # get build log if compile failed
-            else:
-                info = os.popen("cat " + TmpLog).read()
-                self.log.SetDefaultStyle(wx.TextAttr("red",wx.NullColor))
+        # get run log if compile success
+        if os.path.isfile(TmpBin):
+            os.system(TmpBin + " > " + TmpRes + " 2>&1")
+            info = os.popen("cat " + TmpRes).read()
+            self.log.SetDefaultStyle(wx.TextAttr("black",wx.NullColor))
 
-        # compile an untitled file
+        #get build log if compile failed
         else:
-            # get tmp source file path
-            if self.FileFlag == 1:
-                CC = "gcc"
-                FilePath = TmpBin + ".c"
-            elif self.FileFlag == 2:
-                CC = "g++"
-                FilePath = TmpBin + ".cpp"
-
-            # delete old tmp files
-            os.system("rm -rf /tmp/foo* > /dev/null 2>&1")
-
-            # save file
-            self.rtc.SaveFile(FilePath, 1)
-
-            os.system(CC + " " + FilePath + " -o " + TmpBin + " > " + TmpLog + " 2>&1")
-
-            # get run log if compile success
-            if os.path.isfile(TmpBin):
-                os.system(TmpBin + " > " + TmpRes + " 2>&1")
-                info = os.popen("cat " + TmpRes).read()
-                self.log.SetDefaultStyle(wx.TextAttr("black",wx.NullColor))
-
-            #get build log if compile failed
-            else:
-                info = os.popen("cat " + TmpLog).read()
-                self.log.SetDefaultStyle(wx.TextAttr("red",wx.NullColor))
+            info = os.popen("cat " + TmpLog).read()
+            self.log.SetDefaultStyle(wx.TextAttr("red",wx.NullColor))
 
         # write log to log panel with timestamp
         date = os.popen("date").read()
         self.log.SetValue("************ Time: " + date.split(" ")[4] + " ************\n")
         self.log.AppendText(info + "\n")
-        # update the title bar
-        titleTxt = "[" + FilePath + "] - WxGcc"
-        wx.CallAfter(self.UpdateTitle, titleTxt)
 
     def OnShowFind(self, evt):
         data = wx.FindReplaceData()
