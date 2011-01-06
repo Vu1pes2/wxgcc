@@ -106,11 +106,17 @@ class WxgccFrame(wx.Frame):
         self.rtc.SetBackgroundColour((207,247,207))
         self.log.SetBackgroundColour((207,247,207))
 
-        # set text color
-        #self.rtc.BeginTextColour((255,255,255))
+        self.rtc.WriteText("/*")
+        self.rtc.Newline()
 
-        self.rtc.BeginSuppressUndo()
-        self.rtc.BeginParagraphSpacing(0, 20)
+        self.rtc.WriteText(" * This is the demo code of C language.")
+        self.rtc.Newline()
+
+        self.rtc.WriteText(" * Just modify me when programing.")
+        self.rtc.Newline()
+
+        self.rtc.WriteText(" */")
+        self.rtc.Newline()
 
         self.rtc.WriteText("#include <stdio.h>")
         self.rtc.Newline()
@@ -121,18 +127,14 @@ class WxgccFrame(wx.Frame):
         self.rtc.WriteText("{")
         self.rtc.Newline()
 
-        self.rtc.WriteText("printf(\"Hello C !\\n\");")
-        self.rtc.BeginLeftIndent(60)
+        self.rtc.WriteText("    printf(\"Hello C !\\n\");")
         self.rtc.Newline()
 
-        self.rtc.WriteText("return 0;")
+        self.rtc.WriteText("    return 0;")
         self.rtc.Newline()
-        self.rtc.EndLeftIndent()
 
         self.rtc.WriteText("}")
 
-        self.rtc.EndParagraphSpacing()
-        self.rtc.EndSuppressUndo()
         self.rtc.Thaw()
 
     def InitCpp(self):
@@ -141,8 +143,17 @@ class WxgccFrame(wx.Frame):
         self.rtc.SetBackgroundColour((207,207,247))
         self.log.SetBackgroundColour((207,207,247))
 
-        self.rtc.BeginSuppressUndo()
-        self.rtc.BeginParagraphSpacing(0, 20)
+        self.rtc.WriteText("/*")
+        self.rtc.Newline()
+
+        self.rtc.WriteText(" * This is the demo code of C++ language.")
+        self.rtc.Newline()
+
+        self.rtc.WriteText(" * Just modify me when programing.")
+        self.rtc.Newline()
+
+        self.rtc.WriteText(" */")
+        self.rtc.Newline()
 
         self.rtc.WriteText("#include<iostream>")
         self.rtc.Newline()
@@ -153,18 +164,14 @@ class WxgccFrame(wx.Frame):
         self.rtc.WriteText("{")
         self.rtc.Newline()
 
-        self.rtc.WriteText("std::cout << \"Hello C++ !\\n\";")
-        self.rtc.BeginLeftIndent(60)
+        self.rtc.WriteText("    std::cout << \"Hello C++ !\\n\";")
         self.rtc.Newline()
 
-        self.rtc.WriteText("return 0;")
+        self.rtc.WriteText("    return 0;")
         self.rtc.Newline()
-        self.rtc.EndLeftIndent()
 
         self.rtc.WriteText("}")
 
-        self.rtc.EndParagraphSpacing()
-        self.rtc.EndSuppressUndo()
         self.rtc.Thaw()
 
     def OnURL(self, evt):
