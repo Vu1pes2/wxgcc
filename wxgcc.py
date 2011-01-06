@@ -240,33 +240,34 @@ class WxgccFrame(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             if path:
-                #fileType = types[dlg.GetFilterIndex()]
-                self.rtc.LoadFile(path, fileType)
-                self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
-                titleTxt = "[" + path + "] - WxGcc"
-                wx.CallAfter(self.UpdateTitle, titleTxt)
+                if self.WarningDlg(evt):
+                    #fileType = types[dlg.GetFilterIndex()]
+                    self.rtc.LoadFile(path, fileType)
+                    self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
+                    titleTxt = "[" + path + "] - WxGcc"
+                    wx.CallAfter(self.UpdateTitle, titleTxt)
 
-                if path.split('.')[-1] == 'c':
-                    self.FileFlag = 1
-                    self.log.Clear()
-                    self.rtc.SetBackgroundColour((207,247,207))
-                    self.log.SetBackgroundColour((207,247,207))
-                    self.CtrlRunBars(True)
-                    self.CtrlImgBars(False)
-                elif path.split('.')[-1] == 'cpp':
-                    self.FileFlag = 2
-                    self.log.Clear()
-                    self.rtc.SetBackgroundColour((207,207,247))
-                    self.log.SetBackgroundColour((207,207,247))
-                    self.CtrlRunBars(True)
-                    self.CtrlImgBars(False)
-                else:
-                    self.FileFlag = 0
-                    self.log.Clear()
-                    self.rtc.SetBackgroundColour((255,255,255))
-                    self.log.SetBackgroundColour((255,255,255))
-                    self.CtrlRunBars(False)
-                    self.CtrlImgBars(True)
+                    if path.split('.')[-1] == 'c':
+                        self.FileFlag = 1
+                        self.log.Clear()
+                        self.rtc.SetBackgroundColour((207,247,207))
+                        self.log.SetBackgroundColour((207,247,207))
+                        self.CtrlRunBars(True)
+                        self.CtrlImgBars(False)
+                    elif path.split('.')[-1] == 'cpp':
+                        self.FileFlag = 2
+                        self.log.Clear()
+                        self.rtc.SetBackgroundColour((207,207,247))
+                        self.log.SetBackgroundColour((207,207,247))
+                        self.CtrlRunBars(True)
+                        self.CtrlImgBars(False)
+                    else:
+                        self.FileFlag = 0
+                        self.log.Clear()
+                        self.rtc.SetBackgroundColour((255,255,255))
+                        self.log.SetBackgroundColour((255,255,255))
+                        self.CtrlRunBars(False)
+                        self.CtrlImgBars(True)
 
         dlg.Destroy()
         
