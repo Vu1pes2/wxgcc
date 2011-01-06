@@ -1,20 +1,15 @@
 #!/bin/env python
 #----------------------------------------------------------------------------
 # Name:         wxgcc.py
-# Purpose:      Fast build a C problem for Linux user.
+# Purpose:      A rich text editor with C/C++ programs compiling support.
 #
 # Author:       Zechao Wang <zwang@ucrobotics.com>
 #
 # Created:      26-Dec-2010
 # RCS-ID:       
 # Copyright:    (c) 2010 by Zechao Wang
-# Licence:      wxWindows license
+# Licence:      GPLV2
 #----------------------------------------------------------------------------
-
-# TODO List:
-# * Multi-tab supported for compile multi-files 
-# * High light for C code source
-# * Line numbers support
 
 import os
 import wx
