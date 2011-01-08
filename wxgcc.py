@@ -47,9 +47,10 @@ class WxgccFrame(wx.Frame):
         # set the window center
         self.Center()
 
-	self.FileFlag = 0
+        self.FileFlag = 0
         self.FileTxt = ""
-	self.panel = wx.Panel(self, wx.ID_ANY)
+        self.FullScreen = False
+        self.panel = wx.Panel(self, wx.ID_ANY)
 
         self.mgr = wx.aui.AuiManager()
         self.mgr.SetManagedWindow(self.panel)
@@ -544,6 +545,17 @@ class WxgccFrame(wx.Frame):
         self.log.SetValue("************ Time: " + date.split(" ")[4] + " ************\n")
         self.log.AppendText(info + "\n")
 
+    def OnFullScreen(self, evt):
+        if self.FullScreen:
+            self.FullScreen = False
+            self.ShowFullScreen(self.FullScreen, wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION)
+        else:
+            self.FullScreen = True
+            self.ShowFullScreen(self.FullScreen, wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION)
+
+    def OnUpdateFullScreen(self, evt):
+        evt.Check(self.FullScreen)
+        
     def OnShowFind(self, evt):
         data = wx.FindReplaceData()
 
@@ -774,7 +786,9 @@ class WxgccFrame(wx.Frame):
         doBind( toolMenu.Append(-1, "&Replace...\tCtrl+R"), self.OnShowReplace )
         toolMenu.AppendSeparator()
         doBind( toolMenu.Append(ID_MB_IMG, "&Insert Images\tCtrl+M", "Insert images"), self.OnImg)
-        doBind( toolMenu.Append(ID_MB_RUN, "&Run\tF11", "Compile and run C/C++ files"), self.OnRun)
+        doBind( toolMenu.Append(ID_MB_RUN, "&Run C/C++\tF5", "Compile and run C/C++ files"), self.OnRun)
+        toolMenu.AppendSeparator()
+        doBind( toolMenu.AppendCheckItem(-1, "&Full Screen\tF11", "Set frame full screen"), self.OnFullScreen, self.OnUpdateFullScreen)
 
         helpMenu = wx.Menu()
         doBind( helpMenu.Append(-1, "&About"), self.OnAbout)
@@ -821,7 +835,7 @@ class WxgccFrame(wx.Frame):
         doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/colour.png"), shortHelpString="Font Colour"), self.OnColour)
         self.tbar.AddSeparator()
         doBind( self.tbar.AddTool(ID_TB_IMG, wx.Bitmap("./icon/img.png"), shortHelpString="Insert Images"), self.OnImg)
-        doBind( self.tbar.AddTool(ID_TB_RUN, wx.Bitmap("./icon/run.png"), shortHelpString="Run"), self.OnRun)
+        doBind( self.tbar.AddTool(ID_TB_RUN, wx.Bitmap("./icon/run.png"), shortHelpString="Run C/C++"), self.OnRun)
         self.tbar.AddSeparator()
         doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/find.png"), shortHelpString="Find"), self.OnShowFind)
         doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/replace.png"), shortHelpString="Replace"), self.OnShowReplace)
