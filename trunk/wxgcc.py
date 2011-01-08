@@ -12,6 +12,7 @@
 #----------------------------------------------------------------------------
 
 import os
+import sys
 import wx
 import wx.aui
 import wx.richtext as rt
@@ -335,6 +336,9 @@ class WxgccFrame(wx.Frame):
     def OnFileExit(self, evt):
         if self.WarningDlg(evt):
             self.Close(True)
+
+    def OnForceExit(self, evt):
+        sys.exit(0)
 
     def OnFrameClose(self, evt):
         if self.WarningDlg(evt):
@@ -747,7 +751,8 @@ class WxgccFrame(wx.Frame):
         doBind( fileMenu.Append(-1, "&Save As...\tF12", "Save to a new file"), self.OnFileSaveAs )
         doBind( fileMenu.Append(-1, "&View as HTML", "View HTML"), self.OnFileViewHTML)
         fileMenu.AppendSeparator()
-        doBind( fileMenu.Append(-1, "E&xit\tCtrl+Q", "Quit this program"), self.OnFileExit )
+        doBind( fileMenu.Append(-1, "E&xit\tCtrl+Q", "Exit this program"), self.OnFileExit )
+        doBind( fileMenu.Append(-1, "&Force Exit\tShift+Ctrl+Q", "Force to exit"), self.OnForceExit )
         
         editMenu = wx.Menu()
         doBind( editMenu.Append(wx.ID_UNDO, "&Undo\tCtrl+Z"), self.ForwardEvent, self.ForwardEvent)
