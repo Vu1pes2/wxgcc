@@ -75,7 +75,7 @@ ID_TB_IMG             = 78
 ID_TB_RUN             = 79
 ID_TB_REPLACE         = 80
 
-ID_MB_LIST = [ID_MB_NEW, ID_MB_NEW_C, ID_MB_NEW_CPP, ID_MB_OPEN, wx.ID_UNDO, wx.ID_REDO, wx.ID_CUT, wx.ID_PASTE, wx.ID_CLEAR, ID_MB_BOLD, ID_MB_ITALIC, ID_MB_UNDERLINE, ID_MB_LEFT, ID_MB_CENTER, ID_MB_RIGHT, ID_MB_INDENT_MORE, ID_MB_INDENT_LESS, ID_MB_INCREASE_SPACE, ID_MB_DECREASE_SPACE, ID_MB_NORMAL_LINE, ID_MB_MORE_LINE, ID_MB_DOUBLE_LINE, ID_MB_FONT, ID_MB_REPLACE, ID_MB_IMG, ID_MB_RUN]
+ID_MB_LIST = [ID_MB_NEW, ID_MB_NEW_C, ID_MB_NEW_CPP, ID_MB_OPEN, wx.ID_UNDO, wx.ID_REDO, wx.ID_CUT, wx.ID_PASTE, ID_MB_BOLD, ID_MB_ITALIC, ID_MB_UNDERLINE, ID_MB_LEFT, ID_MB_CENTER, ID_MB_RIGHT, ID_MB_INDENT_MORE, ID_MB_INDENT_LESS, ID_MB_INCREASE_SPACE, ID_MB_DECREASE_SPACE, ID_MB_NORMAL_LINE, ID_MB_MORE_LINE, ID_MB_DOUBLE_LINE, ID_MB_FONT, ID_MB_REPLACE, ID_MB_IMG, ID_MB_RUN]
 
 ID_TB_LIST = [ID_TB_NEW, ID_TB_NEW_C, ID_TB_NEW_CPP, ID_TB_OPEN, ID_TB_BOLD, ID_TB_ITALIC, ID_TB_UNDERLINE, ID_TB_LEFT, ID_TB_CENTER, ID_TB_RIGHT, ID_TB_INDENT_LESS, ID_TB_INDENT_MORE, ID_TB_FONT, ID_TB_COLOR, ID_TB_IMG, ID_TB_RUN, ID_TB_REPLACE]
 
@@ -800,7 +800,7 @@ class WxgccFrame(wx.Frame):
         doBind( editMenu.Append(wx.ID_CUT, "Cu&t\tCtrl+X"), self.ForwardEvent, self.ForwardEvent )
         doBind( editMenu.Append(wx.ID_COPY, "&Copy\tCtrl+C"), self.ForwardEvent, self.ForwardEvent)
         doBind( editMenu.Append(wx.ID_PASTE, "&Paste\tCtrl+V"), self.ForwardEvent, self.ForwardEvent)
-        doBind( editMenu.Append(wx.ID_CLEAR, "&Delete\tDel"), self.ForwardEvent, self.ForwardEvent)
+        #doBind( editMenu.Append(wx.ID_CLEAR, "&Delete\tDel"), self.ForwardEvent, self.ForwardEvent)
         editMenu.AppendSeparator()
         doBind( editMenu.Append(wx.ID_SELECTALL, "Select A&ll\tCtrl+A"), self.ForwardEvent, self.ForwardEvent )
 
