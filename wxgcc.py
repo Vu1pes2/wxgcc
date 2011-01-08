@@ -332,6 +332,7 @@ class WxgccFrame(wx.Frame):
         path = self.rtc.GetFilename()
         if path:
             self.rtc.SaveFile(path, 1)
+            self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
             titleTxt = "[" + path + "] - WxGcc"
             wx.CallAfter(self.UpdateTitle, titleTxt)
         else:
@@ -353,6 +354,7 @@ class WxgccFrame(wx.Frame):
                 ##    path += '.' + ext
 
                 self.rtc.SaveFile(path, fileType)
+                self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
                 titleTxt = "[" + path + "] - WxGcc"
                 wx.CallAfter(self.UpdateTitle, titleTxt)
 
