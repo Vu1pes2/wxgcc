@@ -56,8 +56,9 @@ class WxgccFrame(wx.Frame):
 
         self.MakeMenuBar()
         self.MakeToolBar()
-        self.CreateStatusBar()
-        #wx.CallAfter(self.UpdateStatus, "Welcome to wxgcc 1.5 !")
+        self.StatusBar = self.CreateStatusBar()
+        self.StatusBar.SetFieldsCount(2)
+        #self.StatusBar.SetStatusWidths([-3,-2])
 
         # create log box
         self.log = wx.TextCtrl(self.panel, -1, style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL, size=(-1,200))
@@ -181,7 +182,7 @@ class WxgccFrame(wx.Frame):
             self.FileTxt = ""
             self.FileFlag = 0
             self.rtc.SetFilename("")
-            self.rtc.SetInsertionPointEnd()
+            self.rtc.SetInsertionPoint(0)
             titleTxt = "[Untitled Txt File] - WxGcc"
             wx.CallAfter(self.UpdateTitle, titleTxt)
             self.CtrlRunBars(False)
@@ -195,7 +196,7 @@ class WxgccFrame(wx.Frame):
             self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
             self.FileFlag = 1
             self.rtc.SetFilename("")
-            self.rtc.SetInsertionPointEnd()
+            self.rtc.SetInsertionPoint(0)
             titleTxt = "[Untitled C File] - WxGcc"
             wx.CallAfter(self.UpdateTitle, titleTxt)
             #wx.CallAfter(self.UpdateStatus, "")
@@ -210,7 +211,7 @@ class WxgccFrame(wx.Frame):
             self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
             self.FileFlag = 2
             self.rtc.SetFilename("")
-            self.rtc.SetInsertionPointEnd()
+            self.rtc.SetInsertionPoint(0)
             titleTxt = "[Untitled C++ File] - WxGcc"
             wx.CallAfter(self.UpdateTitle, titleTxt)
             #wx.CallAfter(self.UpdateStatus, "New C++ file")
@@ -588,7 +589,7 @@ class WxgccFrame(wx.Frame):
 
         if loc == -1:
             statusTxt = 'Not Found "' + findTxt + '"'
-            wx.CallAfter(self.UpdateStatus, statusTxt)
+            wx.CallAfter(self.UpdateStatus, statusTxt, 0)
         else:
             self.rtc.ShowPosition(loc)
             self.rtc.SetSelection(loc, loc + len(findTxt))
@@ -619,7 +620,7 @@ class WxgccFrame(wx.Frame):
 
         if loc == -1:
             statusTxt = 'Not Found "' + findTxt + '"'
-            wx.CallAfter(self.UpdateStatus, statusTxt)
+            wx.CallAfter(self.UpdateStatus, statusTxt, 0)
         else:
             self.rtc.ShowPosition(loc)
             self.rtc.SetSelection(loc, loc + len(findTxt))
@@ -659,10 +660,10 @@ class WxgccFrame(wx.Frame):
                  statusTxt = 'Total replaced ' + str(count) + ' time'
              else:
                  statusTxt = 'Total replaced ' + str(count) + ' times'
-             wx.CallAfter(self.UpdateStatus, statusTxt)
+             wx.CallAfter(self.UpdateStatus, statusTxt, 0)
         else:
             statusTxt = 'Not Found "' + findTxt + '"'
-            wx.CallAfter(self.UpdateStatus, statusTxt)
+            wx.CallAfter(self.UpdateStatus, statusTxt, 0)
  
         # after finished replace, close itself
         #evt.GetDialog().Destroy()
@@ -713,6 +714,10 @@ class WxgccFrame(wx.Frame):
         # redo, cut, copy, paste, delete, and select all, so just
         # forward the event to it.
         self.rtc.ProcessEvent(evt)
+
+        RangeTxt = self.rtc.GetRange(0, self.rtc.GetInsertionPoint())
+        PositionInfo =  "Row: " + str(len(RangeTxt.split('\n'))) + "    |    " + "Col: " + str(len(RangeTxt.split('\n')[-1])) + "    |    " + "Total Line Numbers: " + str(self.rtc.GetNumberOfLines())
+        wx.CallAfter(self.UpdateStatus, PositionInfo, 1)
 
     def MakeMenuBar(self):
         def doBind(item, handler, updateUI=None):
@@ -825,8 +830,8 @@ class WxgccFrame(wx.Frame):
 
         self.tbar.EnableTool(ID_TB_RUN, False)
 
-    def UpdateStatus(self, msg):
-        self.SetStatusText(msg)
+    def UpdateStatus(self, msg, num):
+        self.StatusBar.SetStatusText(msg, num)
 
     def UpdateTitle(self, msg):
         self.SetTitle(msg)
