@@ -77,7 +77,7 @@ ID_TB_REPLACE         = 80
 
 ID_MB_LIST = [ID_MB_NEW, ID_MB_NEW_C, ID_MB_NEW_CPP, ID_MB_OPEN, wx.ID_UNDO, wx.ID_REDO, wx.ID_CUT, wx.ID_PASTE, ID_MB_BOLD, ID_MB_ITALIC, ID_MB_UNDERLINE, ID_MB_LEFT, ID_MB_CENTER, ID_MB_RIGHT, ID_MB_INDENT_MORE, ID_MB_INDENT_LESS, ID_MB_INCREASE_SPACE, ID_MB_DECREASE_SPACE, ID_MB_NORMAL_LINE, ID_MB_MORE_LINE, ID_MB_DOUBLE_LINE, ID_MB_FONT, ID_MB_REPLACE, ID_MB_IMG, ID_MB_RUN]
 
-ID_TB_LIST = [ID_TB_NEW, ID_TB_NEW_C, ID_TB_NEW_CPP, ID_TB_OPEN, ID_TB_BOLD, ID_TB_ITALIC, ID_TB_UNDERLINE, ID_TB_LEFT, ID_TB_CENTER, ID_TB_RIGHT, ID_TB_INDENT_LESS, ID_TB_INDENT_MORE, ID_TB_FONT, ID_TB_COLOR, ID_TB_IMG, ID_TB_RUN, ID_TB_REPLACE]
+ID_TB_LIST = [ID_TB_NEW, ID_TB_NEW_C, ID_TB_NEW_CPP, ID_TB_OPEN, wx.ID_UNDO, wx.ID_REDO, ID_TB_BOLD, ID_TB_ITALIC, ID_TB_UNDERLINE, ID_TB_LEFT, ID_TB_CENTER, ID_TB_RIGHT, ID_TB_INDENT_LESS, ID_TB_INDENT_MORE, ID_TB_FONT, ID_TB_COLOR, ID_TB_IMG, ID_TB_RUN, ID_TB_REPLACE]
 
 licenseText = """
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -862,9 +862,9 @@ class WxgccFrame(wx.Frame):
         doBind( self.tbar.AddTool(ID_TB_OPEN, wx.Bitmap("./icon/open.png"), shortHelpString="Open"), self.OnFileOpen)
         doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/save.png"), shortHelpString="Save"), self.OnFileSave)
         self.tbar.AddSeparator()
-        #doBind( self.tbar.AddTool(wx.ID_UNDO, wx.Bitmap("./icon/undo.png"), shortHelpString="Undo"), self.ForwardEvent, self.ForwardEvent)
-        #doBind( self.tbar.AddTool(wx.ID_REDO, wx.Bitmap("./icon/redo.png"), shortHelpString="Redo"), self.ForwardEvent, self.ForwardEvent)
-        #self.tbar.AddSeparator()
+        doBind( self.tbar.AddTool(wx.ID_UNDO, wx.Bitmap("./icon/undo.png"), shortHelpString="Undo"), self.ForwardEvent, self.ForwardEvent)
+        doBind( self.tbar.AddTool(wx.ID_REDO, wx.Bitmap("./icon/redo.png"), shortHelpString="Redo"), self.ForwardEvent, self.ForwardEvent)
+        self.tbar.AddSeparator()
         doBind( self.tbar.AddTool(ID_TB_BOLD, wx.Bitmap("./icon/bold.png"), isToggle=True, shortHelpString="Bold"), self.OnBold, self.OnUpdateBold)
         doBind( self.tbar.AddTool(ID_TB_ITALIC, wx.Bitmap("./icon/italic.png"), isToggle=True, shortHelpString="Italic"), self.OnItalic, self.OnUpdateItalic)
         doBind( self.tbar.AddTool(ID_TB_UNDERLINE, wx.Bitmap("./icon/underline.png"), isToggle=True, shortHelpString="Underline"), self.OnUnderline, self.OnUpdateUnderline)
