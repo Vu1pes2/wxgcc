@@ -22,10 +22,62 @@ TmpBin = "/tmp/foo"
 TmpLog = "/tmp/foo.log"
 TmpRes = "/tmp/foo.res"
 
-ID_MB_RUN = 1001
-ID_MB_IMG = 1002
-ID_TB_RUN = 1003
-ID_TB_IMG = 1004
+ID_MB_NEW             = 11
+ID_MB_NEW_C           = 12
+ID_MB_NEW_CPP         = 13
+ID_MB_OPEN            = 14
+#ID_MB_SAVE           = 15
+#ID_MB_SAVE_AS        = 16
+
+#ID_MB_UNDO           = 21  # wx.ID_UNDO
+#ID_MB_REDO           = 22  # wx.ID_REDO
+#ID_MB_CUT            = 23  # wx.ID_CUT
+#ID_MB_PASTE          = 24  # wx.ID_PASTE
+#ID_MB_DEL            = 25  # wx.ID_CLEAR
+
+ID_MB_BOLD            = 31
+ID_MB_ITALIC          = 32
+ID_MB_UNDERLINE       = 33
+ID_MB_LEFT            = 34
+ID_MB_CENTER          = 35
+ID_MB_RIGHT           = 36
+ID_MB_INDENT_MORE     = 37
+ID_MB_INDENT_LESS     = 38
+ID_MB_INCREASE_SPACE  = 39
+ID_MB_DECREASE_SPACE  = 40
+ID_MB_NORMAL_LINE     = 41
+ID_MB_MORE_LINE       = 42
+ID_MB_DOUBLE_LINE     = 43
+ID_MB_FONT            = 44
+
+ID_MB_REPLACE         = 51
+ID_MB_IMG             = 52
+ID_MB_RUN             = 53
+
+ID_TB_NEW             = 61
+ID_TB_NEW_C           = 62
+ID_TB_NEW_CPP         = 63
+ID_TB_OPEN            = 64
+#ID_TB_SAVE           = 65
+#ID_TB_UNDO           = 66
+#ID_TB_REDO           = 67
+ID_TB_BOLD            = 68
+ID_TB_ITALIC          = 69
+ID_TB_UNDERLINE       = 70
+ID_TB_LEFT            = 71
+ID_TB_CENTER          = 72
+ID_TB_RIGHT           = 73
+ID_TB_INDENT_LESS     = 74
+ID_TB_INDENT_MORE     = 75
+ID_TB_FONT            = 76
+ID_TB_COLOR           = 77
+ID_TB_IMG             = 78
+ID_TB_RUN             = 79
+ID_TB_REPLACE         = 80
+
+ID_MB_LIST = [ID_MB_NEW, ID_MB_NEW_C, ID_MB_NEW_CPP, ID_MB_OPEN, wx.ID_UNDO, wx.ID_REDO, wx.ID_CUT, wx.ID_PASTE, wx.ID_CLEAR, ID_MB_BOLD, ID_MB_ITALIC, ID_MB_UNDERLINE, ID_MB_LEFT, ID_MB_CENTER, ID_MB_RIGHT, ID_MB_INDENT_MORE, ID_MB_INDENT_LESS, ID_MB_INCREASE_SPACE, ID_MB_DECREASE_SPACE, ID_MB_NORMAL_LINE, ID_MB_MORE_LINE, ID_MB_DOUBLE_LINE, ID_MB_FONT, ID_MB_REPLACE, ID_MB_IMG, ID_MB_RUN]
+
+ID_TB_LIST = [ID_TB_NEW, ID_TB_NEW_C, ID_TB_NEW_CPP, ID_TB_OPEN, ID_TB_BOLD, ID_TB_ITALIC, ID_TB_UNDERLINE, ID_TB_LEFT, ID_TB_CENTER, ID_TB_RIGHT, ID_TB_INDENT_LESS, ID_TB_INDENT_MORE, ID_TB_FONT, ID_TB_COLOR, ID_TB_IMG, ID_TB_RUN, ID_TB_REPLACE]
 
 licenseText = """
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -40,7 +92,7 @@ You should have received a copy of the GNU General Public License along with thi
 class WxgccFrame(wx.Frame):
     def __init__(self, parent, id=-1):
         wx.Frame.__init__(self, parent, wx.ID_ANY, title='wxPython GCC ToolKit 1.5', size=(800, 600), style = wx.DEFAULT_FRAME_STYLE)
-        self.Bind(wx.EVT_CLOSE, self.OnFrameClose)
+        self.Bind(wx.EVT_CLOSE, self.OnExit)
 
         # set the frame icon
         self.SetIcon(wx.Icon('./icon/wxgcc.ico', wx.BITMAP_TYPE_ICO))
@@ -50,6 +102,7 @@ class WxgccFrame(wx.Frame):
 
         self.FileFlag = 0
         self.FileTxt = ""
+        self.lock = False
         self.FullScreen = False
         self.panel = wx.Panel(self, wx.ID_ANY)
 
@@ -305,45 +358,13 @@ class WxgccFrame(wx.Frame):
 
         dlg.Destroy()
                 
-    def OnFileViewHTML(self, evt):
-        # Get an instance of the html file handler, use it to save the
-        # document to a StringIO stream, and then display the
-        # resulting html text in a dialog with a HtmlWindow.
-        handler = rt.RichTextHTMLHandler()
-        handler.SetFlags(rt.RICHTEXT_HANDLER_SAVE_IMAGES_TO_MEMORY)
-        handler.SetFontSizeMapping([7,9,11,12,14,22,100])
-
-        import cStringIO
-        stream = cStringIO.StringIO()
-        if not handler.SaveStream(self.rtc.GetBuffer(), stream):
-            return
-
-        import wx.html
-        dlg = wx.Dialog(self, title="HTML", style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
-        html = wx.html.HtmlWindow(dlg, size=(500,400), style=wx.BORDER_SUNKEN)
-        html.SetPage(stream.getvalue())
-        btn = wx.Button(dlg, wx.ID_CANCEL)
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(html, 1, wx.ALL|wx.EXPAND, 5)
-        sizer.Add(btn, 0, wx.ALL|wx.CENTER, 10)
-        dlg.SetSizer(sizer)
-        sizer.Fit(dlg)
-
-        dlg.ShowModal()
-
-        handler.DeleteTemporaryImages()
-    
-    def OnFileExit(self, evt):
+    def OnExit(self, evt):
         if self.WarningDlg(evt):
-            self.Close(True)
+            self.Destroy()
 
     def OnForceExit(self, evt):
         sys.exit(0)
 
-    def OnFrameClose(self, evt):
-        if self.WarningDlg(evt):
-            self.Destroy()
-      
     def OnBold(self, evt):
         self.rtc.ApplyBoldToSelection()
         
@@ -549,13 +570,30 @@ class WxgccFrame(wx.Frame):
         self.log.SetValue("************ Time: " + date.split(" ")[4] + " ************\n")
         self.log.AppendText(info + "\n")
 
+    def OnLock(self, evt):
+        if self.lock:
+            self.rtc.SetEditable(True)
+            self.CtrlMenuBars(ID_MB_LIST, True)
+            self.CtrlToolBars(ID_TB_LIST, True)
+            wx.CallAfter(self.UpdateStatus, "Unlock edit", 0)
+            self.lock = False
+        else:
+            self.rtc.SetEditable(False)
+            self.CtrlMenuBars(ID_MB_LIST, False)
+            self.CtrlToolBars(ID_TB_LIST, False)
+            wx.CallAfter(self.UpdateStatus, "Lock edit", 0)
+            self.lock = True
+
+    def OnUpdateLock(self, evt):
+        evt.Check(self.lock)
+
     def OnFullScreen(self, evt):
         if self.FullScreen:
+            self.ShowFullScreen(False)
             self.FullScreen = False
-            self.ShowFullScreen(self.FullScreen, wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION)
         else:
+            self.ShowFullScreen(True, wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION)
             self.FullScreen = True
-            self.ShowFullScreen(self.FullScreen, wx.FULLSCREEN_NOBORDER | wx.FULLSCREEN_NOCAPTION)
 
     def OnUpdateFullScreen(self, evt):
         evt.Check(self.FullScreen)
@@ -742,16 +780,15 @@ class WxgccFrame(wx.Frame):
                 self.Bind(wx.EVT_UPDATE_UI, updateUI, item)
             
         fileMenu = wx.Menu()
-        doBind( fileMenu.Append(-1, "&New \tCtrl+T", "Create a Txt file"), self.OnNew )
-        doBind( fileMenu.Append(-1, "&New C\tCtrl+N", "Create a C file"), self.OnNewC )
-        doBind( fileMenu.Append(-1, "&New C++\tCtrl+P", "Create a C++ file"), self.OnNewCpp )
-        doBind( fileMenu.Append(-1, "&Open\tCtrl+O", "Open a file"), self.OnFileOpen )
+        doBind( fileMenu.Append(ID_MB_NEW, "&New \tCtrl+T", "Create a Txt file"), self.OnNew )
+        doBind( fileMenu.Append(ID_MB_NEW_C, "&New C\tCtrl+N", "Create a C file"), self.OnNewC )
+        doBind( fileMenu.Append(ID_MB_NEW_CPP, "&New C++\tCtrl+P", "Create a C++ file"), self.OnNewCpp )
+        doBind( fileMenu.Append(ID_MB_OPEN, "&Open\tCtrl+O", "Open a file"), self.OnFileOpen )
 	fileMenu.AppendSeparator()
         doBind( fileMenu.Append(-1, "&Save\tCtrl+S", "Save a file"), self.OnFileSave )
         doBind( fileMenu.Append(-1, "&Save As...\tF12", "Save to a new file"), self.OnFileSaveAs )
-        doBind( fileMenu.Append(-1, "&View as HTML", "View HTML"), self.OnFileViewHTML)
         fileMenu.AppendSeparator()
-        doBind( fileMenu.Append(-1, "E&xit\tCtrl+Q", "Exit this program"), self.OnFileExit )
+        doBind( fileMenu.Append(-1, "E&xit\tCtrl+Q", "Exit this program"), self.OnExit )
         doBind( fileMenu.Append(-1, "&Force Exit\tShift+Ctrl+Q", "Force to exit"), self.OnForceExit )
         
         editMenu = wx.Menu()
@@ -766,33 +803,34 @@ class WxgccFrame(wx.Frame):
         doBind( editMenu.Append(wx.ID_SELECTALL, "Select A&ll\tCtrl+A"), self.ForwardEvent, self.ForwardEvent )
 
         formatMenu = wx.Menu()
-        doBind( formatMenu.AppendCheckItem(-1, "&Bold\tCtrl+B"), self.OnBold, self.OnUpdateBold)
-        doBind( formatMenu.AppendCheckItem(-1, "&Italic\tCtrl+I"), self.OnItalic, self.OnUpdateItalic)
-        doBind( formatMenu.AppendCheckItem(-1, "&Underline\tCtrl+U"), self.OnUnderline, self.OnUpdateUnderline)
+        doBind( formatMenu.AppendCheckItem(ID_MB_BOLD, "&Bold\tCtrl+B"), self.OnBold, self.OnUpdateBold)
+        doBind( formatMenu.AppendCheckItem(ID_MB_ITALIC, "&Italic\tCtrl+I"), self.OnItalic, self.OnUpdateItalic)
+        doBind( formatMenu.AppendCheckItem(ID_MB_UNDERLINE, "&Underline\tCtrl+U"), self.OnUnderline, self.OnUpdateUnderline)
         formatMenu.AppendSeparator()
-        doBind( formatMenu.AppendCheckItem(-1, "L&eft Align"), self.OnAlignLeft, self.OnUpdateAlignLeft)
-        doBind( formatMenu.AppendCheckItem(-1, "&Centre"), self.OnAlignCenter, self.OnUpdateAlignCenter)
-        doBind( formatMenu.AppendCheckItem(-1, "&Right Align"), self.OnAlignRight, self.OnUpdateAlignRight)
+        doBind( formatMenu.AppendCheckItem(ID_MB_LEFT, "L&eft Align"), self.OnAlignLeft, self.OnUpdateAlignLeft)
+        doBind( formatMenu.AppendCheckItem(ID_MB_CENTER, "&Centre"), self.OnAlignCenter, self.OnUpdateAlignCenter)
+        doBind( formatMenu.AppendCheckItem(ID_MB_RIGHT, "&Right Align"), self.OnAlignRight, self.OnUpdateAlignRight)
         formatMenu.AppendSeparator()
-        doBind( formatMenu.Append(-1, "Indent &More"), self.OnIndentMore)
-        doBind( formatMenu.Append(-1, "Indent &Less"), self.OnIndentLess)
+        doBind( formatMenu.Append(ID_MB_INDENT_MORE, "Indent &More"), self.OnIndentMore)
+        doBind( formatMenu.Append(ID_MB_INDENT_LESS, "Indent &Less"), self.OnIndentLess)
         formatMenu.AppendSeparator()
-        doBind( formatMenu.Append(-1, "Increase Paragraph &Spacing"), self.OnParagraphSpacingMore)
-        doBind( formatMenu.Append(-1, "Decrease &Paragraph Spacing"), self.OnParagraphSpacingLess)
+        doBind( formatMenu.Append(ID_MB_INCREASE_SPACE, "Increase Paragraph &Spacing"), self.OnParagraphSpacingMore)
+        doBind( formatMenu.Append(ID_MB_DECREASE_SPACE, "Decrease &Paragraph Spacing"), self.OnParagraphSpacingLess)
         formatMenu.AppendSeparator()
-        doBind( formatMenu.Append(-1, "Normal Line Spacing"), self.OnLineSpacingSingle)
-        doBind( formatMenu.Append(-1, "1.5 Line Spacing"), self.OnLineSpacingHalf)
-        doBind( formatMenu.Append(-1, "Double Line Spacing"), self.OnLineSpacingDouble)
+        doBind( formatMenu.Append(ID_MB_NORMAL_LINE, "Normal Line Spacing"), self.OnLineSpacingSingle)
+        doBind( formatMenu.Append(ID_MB_MORE_LINE, "1.5 Line Spacing"), self.OnLineSpacingHalf)
+        doBind( formatMenu.Append(ID_MB_DOUBLE_LINE, "Double Line Spacing"), self.OnLineSpacingDouble)
         formatMenu.AppendSeparator()
-        doBind( formatMenu.Append(-1, "&Font..."), self.OnFont)
+        doBind( formatMenu.Append(ID_MB_FONT, "&Font..."), self.OnFont)
 
         toolMenu = wx.Menu()
         doBind( toolMenu.Append(-1, "&Find...\tCtrl+F"), self.OnShowFind )
-        doBind( toolMenu.Append(-1, "&Replace...\tCtrl+R"), self.OnShowReplace )
+        doBind( toolMenu.Append(ID_MB_REPLACE, "&Replace...\tCtrl+R"), self.OnShowReplace )
         toolMenu.AppendSeparator()
         doBind( toolMenu.Append(ID_MB_IMG, "&Insert Images\tCtrl+M", "Insert images"), self.OnImg)
         doBind( toolMenu.Append(ID_MB_RUN, "&Run C/C++\tF5", "Compile and run C/C++ files"), self.OnRun)
         toolMenu.AppendSeparator()
+        doBind( toolMenu.AppendCheckItem(-1, "&Lock Edit\tCtrl+L", "Lock edit"), self.OnLock, self.OnUpdateLock)
         doBind( toolMenu.AppendCheckItem(-1, "&Full Screen\tF11", "Set frame full screen"), self.OnFullScreen, self.OnUpdateFullScreen)
 
         helpMenu = wx.Menu()
@@ -815,35 +853,37 @@ class WxgccFrame(wx.Frame):
                 self.Bind(wx.EVT_UPDATE_UI, updateUI, item)
         
         self.tbar = self.CreateToolBar()
-        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/new.png"), shortHelpString="New Txt"), self.OnNew)
-        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/c.png"), shortHelpString="New C"), self.OnNewC)
-        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/cpp.png"), shortHelpString="New C++"), self.OnNewCpp)
+        doBind( self.tbar.AddTool(ID_TB_NEW, wx.Bitmap("./icon/new.png"), shortHelpString="New Txt"), self.OnNew)
+        doBind( self.tbar.AddTool(ID_TB_NEW_C, wx.Bitmap("./icon/c.png"), shortHelpString="New C"), self.OnNewC)
+        doBind( self.tbar.AddTool(ID_TB_NEW_CPP, wx.Bitmap("./icon/cpp.png"), shortHelpString="New C++"), self.OnNewCpp)
         self.tbar.AddSeparator()
-        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/open.png"), shortHelpString="Open"), self.OnFileOpen)
+        doBind( self.tbar.AddTool(ID_TB_OPEN, wx.Bitmap("./icon/open.png"), shortHelpString="Open"), self.OnFileOpen)
         doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/save.png"), shortHelpString="Save"), self.OnFileSave)
         self.tbar.AddSeparator()
-        doBind( self.tbar.AddTool(wx.ID_UNDO, wx.Bitmap("./icon/undo.png"), shortHelpString="Undo"), self.ForwardEvent, self.ForwardEvent)
-        doBind( self.tbar.AddTool(wx.ID_REDO, wx.Bitmap("./icon/redo.png"), shortHelpString="Redo"), self.ForwardEvent, self.ForwardEvent)
+        #doBind( self.tbar.AddTool(wx.ID_UNDO, wx.Bitmap("./icon/undo.png"), shortHelpString="Undo"), self.ForwardEvent, self.ForwardEvent)
+        #doBind( self.tbar.AddTool(wx.ID_REDO, wx.Bitmap("./icon/redo.png"), shortHelpString="Redo"), self.ForwardEvent, self.ForwardEvent)
+        #self.tbar.AddSeparator()
+        doBind( self.tbar.AddTool(ID_TB_BOLD, wx.Bitmap("./icon/bold.png"), isToggle=True, shortHelpString="Bold"), self.OnBold, self.OnUpdateBold)
+        doBind( self.tbar.AddTool(ID_TB_ITALIC, wx.Bitmap("./icon/italic.png"), isToggle=True, shortHelpString="Italic"), self.OnItalic, self.OnUpdateItalic)
+        doBind( self.tbar.AddTool(ID_TB_UNDERLINE, wx.Bitmap("./icon/underline.png"), isToggle=True, shortHelpString="Underline"), self.OnUnderline, self.OnUpdateUnderline)
         self.tbar.AddSeparator()
-        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/bold.png"), isToggle=True, shortHelpString="Bold"), self.OnBold, self.OnUpdateBold)
-        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/italic.png"), isToggle=True, shortHelpString="Italic"), self.OnItalic, self.OnUpdateItalic)
-        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/underline.png"), isToggle=True, shortHelpString="Underline"), self.OnUnderline, self.OnUpdateUnderline)
+        doBind( self.tbar.AddTool(ID_TB_LEFT, wx.Bitmap("./icon/left.png"), isToggle=True, shortHelpString="Align Left"), self.OnAlignLeft, self.OnUpdateAlignLeft)
+        doBind( self.tbar.AddTool(ID_TB_CENTER, wx.Bitmap("./icon/center.png"), isToggle=True, shortHelpString="Center"), self.OnAlignCenter, self.OnUpdateAlignCenter)
+        doBind( self.tbar.AddTool(ID_TB_RIGHT, wx.Bitmap("./icon/right.png"), isToggle=True, shortHelpString="Align Right"), self.OnAlignRight, self.OnUpdateAlignRight)
         self.tbar.AddSeparator()
-        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/left.png"), isToggle=True, shortHelpString="Align Left"), self.OnAlignLeft, self.OnUpdateAlignLeft)
-        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/center.png"), isToggle=True, shortHelpString="Center"), self.OnAlignCenter, self.OnUpdateAlignCenter)
-        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/right.png"), isToggle=True, shortHelpString="Align Right"), self.OnAlignRight, self.OnUpdateAlignRight)
+        doBind( self.tbar.AddTool(ID_TB_INDENT_LESS, wx.Bitmap("./icon/indent-less.png"), shortHelpString="Indent Less"), self.OnIndentLess)
+        doBind( self.tbar.AddTool(ID_TB_INDENT_MORE, wx.Bitmap("./icon/indent-more.png"), shortHelpString="Indent More"), self.OnIndentMore)
         self.tbar.AddSeparator()
-        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/indent-less.png"), shortHelpString="Indent Less"), self.OnIndentLess)
-        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/indent-more.png"), shortHelpString="Indent More"), self.OnIndentMore)
-        self.tbar.AddSeparator()
-        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/font.png"),  shortHelpString="Font"), self.OnFont)
-        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/colour.png"), shortHelpString="Font Colour"), self.OnColour)
+        doBind( self.tbar.AddTool(ID_TB_FONT, wx.Bitmap("./icon/font.png"),  shortHelpString="Font"), self.OnFont)
+        doBind( self.tbar.AddTool(ID_TB_COLOR, wx.Bitmap("./icon/colour.png"), shortHelpString="Font Colour"), self.OnColour)
         self.tbar.AddSeparator()
         doBind( self.tbar.AddTool(ID_TB_IMG, wx.Bitmap("./icon/img.png"), shortHelpString="Insert Images"), self.OnImg)
         doBind( self.tbar.AddTool(ID_TB_RUN, wx.Bitmap("./icon/run.png"), shortHelpString="Run C/C++"), self.OnRun)
         self.tbar.AddSeparator()
         doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/find.png"), shortHelpString="Find"), self.OnShowFind)
-        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/replace.png"), shortHelpString="Replace"), self.OnShowReplace)
+        doBind( self.tbar.AddTool(ID_TB_REPLACE, wx.Bitmap("./icon/replace.png"), shortHelpString="Replace"), self.OnShowReplace)
+        self.tbar.AddSeparator()
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/lock.png"), isToggle=True, shortHelpString="lock/unlock edit"), self.OnLock, self.OnUpdateLock)
 
         self.tbar.Realize()
 
@@ -855,6 +895,14 @@ class WxgccFrame(wx.Frame):
     def UpdateTitle(self, msg):
         self.SetTitle(msg)
 
+    def CtrlMenuBars(self, idlist, flag):
+        for iditem in idlist:
+            self.mb.Enable(iditem, flag)
+
+    def CtrlToolBars(self, idlist, flag):
+        for iditem in idlist:
+            self.tbar.EnableTool(iditem, flag)
+
     def CtrlRunBars(self, flag):
         self.mb.Enable(ID_MB_RUN, flag)
         self.tbar.EnableTool(ID_TB_RUN, flag)
@@ -863,7 +911,6 @@ class WxgccFrame(wx.Frame):
         self.mb.Enable(ID_MB_IMG, flag)
         self.tbar.EnableTool(ID_TB_IMG, flag)
 
-            
 
 #----------------------------------------------------------------------
 
