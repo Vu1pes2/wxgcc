@@ -102,6 +102,7 @@ class WxgccFrame(wx.Frame):
         self.Center()
 
         self.FileFlag = 0
+        self.LineNumber = 1
         self.FileTxt = ""
         self.lock = False
         self.FullScreen = False
@@ -235,8 +236,9 @@ class WxgccFrame(wx.Frame):
             self.log.Clear()
             self.rtc.SetBackgroundColour((255,255,255))
             self.log.SetBackgroundColour((255,255,255))
-            self.FileTxt = ""
+            self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
             self.FileFlag = 0
+            self.LineNumber = self.rtc.GetNumberOfLines()
             self.rtc.SetFilename("")
             self.rtc.SetInsertionPoint(0)
             titleTxt = "[Untitled Txt File] - WxGcc"
@@ -251,6 +253,7 @@ class WxgccFrame(wx.Frame):
             self.InitC()
             self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
             self.FileFlag = 1
+            self.LineNumber = self.rtc.GetNumberOfLines()
             self.rtc.SetFilename("")
             self.rtc.SetInsertionPoint(0)
             titleTxt = "[Untitled C File] - WxGcc"
@@ -266,6 +269,7 @@ class WxgccFrame(wx.Frame):
             self.InitCpp()
             self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
             self.FileFlag = 2
+            self.LineNumber = self.rtc.GetNumberOfLines()
             self.rtc.SetFilename("")
             self.rtc.SetInsertionPoint(0)
             titleTxt = "[Untitled C++ File] - WxGcc"
@@ -305,6 +309,7 @@ class WxgccFrame(wx.Frame):
                     self.rtc.SetValue(fv)
                     f.close()
                     self.rtc.SetFilename(path)
+                    self.LineNumber = self.rtc.GetNumberOfLines()
                     self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
                     titleTxt = "[" + path + "] - WxGcc"
                     wx.CallAfter(self.UpdateTitle, titleTxt)
@@ -785,8 +790,24 @@ class WxgccFrame(wx.Frame):
         # forward the event to it.
         self.rtc.ProcessEvent(evt)
 
+        # get line info
         RangeTxt = self.rtc.GetRange(0, self.rtc.GetInsertionPoint())
         PositionInfo =  "Row: " + str(len(RangeTxt.split('\n'))) + "    |    " + "Col: " + str(len(RangeTxt.split('\n')[-1])) + "    |    " + "Total Line Numbers: " + str(self.rtc.GetNumberOfLines())
+
+        # get the space number in the beginning of previous line
+        SpaceNum = 0
+        if len(RangeTxt.split('\n')) > 1:
+            for c in RangeTxt.split('\n')[-2]:
+                if c == " ":
+                    SpaceNum += 1
+                else:
+                   break
+        # intelligent indent
+        if self.rtc.GetNumberOfLines() - self.LineNumber == 1 and SpaceNum >0:
+            self.rtc.WriteText(" " * SpaceNum)
+        self.LineNumber = self.rtc.GetNumberOfLines()
+
+        # update status bar
         wx.CallAfter(self.UpdateStatus, PositionInfo, 1)
 
     def MakeMenuBar(self):
