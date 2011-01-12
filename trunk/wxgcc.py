@@ -1,4 +1,5 @@
 #!/bin/env python
+# -*- coding: UTF-8 -*-
 #----------------------------------------------------------------------------
 # Name:         wxgcc.py
 # Purpose:      A rich text editor with C/C++ programs compiling support.
@@ -248,7 +249,7 @@ class WxgccFrame(wx.Frame):
             self.rtc.Clear()
             self.log.Clear()
             self.InitC()
-            self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
+            self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
             self.FileFlag = 1
             self.rtc.SetFilename("")
             self.rtc.SetInsertionPoint(0)
@@ -263,7 +264,7 @@ class WxgccFrame(wx.Frame):
             self.rtc.Clear()
             self.log.Clear()
             self.InitCpp()
-            self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
+            self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
             self.FileFlag = 2
             self.rtc.SetFilename("")
             self.rtc.SetInsertionPoint(0)
@@ -275,7 +276,7 @@ class WxgccFrame(wx.Frame):
 
     def WarningDlg(self, evt):
         path = self.rtc.GetFilename()
-        FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
+        FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
 
         if FileTxt != self.FileTxt:
             dlg = wx.MessageDialog(self, "Do you want to save the file ?", "Warning", wx.YES_NO | wx.YES_DEFAULT | wx.CANCEL | wx.ICON_QUESTION)
@@ -292,15 +293,19 @@ class WxgccFrame(wx.Frame):
         # the file handlers that are loaded
         ##wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=False)
         wildcard = "Files (*.c;*.cpp;*.txt)|*.c;*.cpp;*.txt"
-        fileType = 1
         dlg = wx.FileDialog(self, "Choose a filename", wildcard=wildcard, style=wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             if path:
                 if self.WarningDlg(evt):
                     #fileType = types[dlg.GetFilterIndex()]
-                    self.rtc.LoadFile(path, fileType)
-                    self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
+                    #self.rtc.LoadFile(path, fileType)
+                    f = file(path, "r")
+                    fv = f.read()
+                    self.rtc.SetValue(fv)
+                    f.close()
+                    self.rtc.SetFilename(path)
+                    self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
                     titleTxt = "[" + path + "] - WxGcc"
                     wx.CallAfter(self.UpdateTitle, titleTxt)
 
@@ -331,8 +336,11 @@ class WxgccFrame(wx.Frame):
     def OnFileSave(self, evt):
         path = self.rtc.GetFilename()
         if path:
-            self.rtc.SaveFile(path, 1)
-            self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
+            #self.rtc.SaveFile(path, 1)
+            self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
+            f = file(path, 'w')
+            f.write(self.FileTxt)
+            f.close()
             titleTxt = "[" + path + "] - WxGcc"
             wx.CallAfter(self.UpdateTitle, titleTxt)
         else:
@@ -342,7 +350,6 @@ class WxgccFrame(wx.Frame):
     def OnFileSaveAs(self, evt):
         ##wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=True)
         wildcard = "Files (*.c;*.cpp;*.txt)|*.c;*.cpp;*.txt"
-        fileType = 1
         dlg = wx.FileDialog(self, "Choose a filename", wildcard=wildcard, style=wx.SAVE)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
@@ -353,8 +360,11 @@ class WxgccFrame(wx.Frame):
                 ##if not path.endswith(ext):
                 ##    path += '.' + ext
 
-                self.rtc.SaveFile(path, fileType)
-                self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition())
+                #self.rtc.SaveFile(path, fileType)
+                self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
+                f = file(path, 'w')
+                f.write(str(self.FileTxt))
+                f.close()
                 titleTxt = "[" + path + "] - WxGcc"
                 wx.CallAfter(self.UpdateTitle, titleTxt)
 
@@ -547,8 +557,12 @@ class WxgccFrame(wx.Frame):
         # delete old tmp files
         os.system("rm -rf /tmp/foo* > /dev/null 2>&1")
 
-        # save file
-        self.rtc.SaveFile(FilePath, 1)
+        # save file: tmp var FileTxt shoule be used here, but not self.FileTxt, for the change is not write into orig file
+        #self.rtc.SaveFile(FilePath, 1)
+        FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
+        f = file(FilePath, 'w')
+        f.write(FileTxt)
+        f.close()
 
         os.system(CC + " " + FilePath + " -o " + TmpBin + " > " + TmpLog + " 2>&1")
 
