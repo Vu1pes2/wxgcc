@@ -92,7 +92,7 @@ You should have received a copy of the GNU General Public License along with thi
 
 class WxgccFrame(wx.Frame):
     def __init__(self, parent, id=-1):
-        wx.Frame.__init__(self, parent, wx.ID_ANY, title='wxPython GCC ToolKit 1.5', size=(800, 600), style = wx.DEFAULT_FRAME_STYLE)
+        wx.Frame.__init__(self, parent, wx.ID_ANY, title='wxPython GCC ToolKit 1.8', size=(800, 600), style = wx.DEFAULT_FRAME_STYLE)
         self.Bind(wx.EVT_CLOSE, self.OnExit)
 
         # set the frame icon
@@ -750,7 +750,7 @@ class WxgccFrame(wx.Frame):
         # First we create and fill the info object
         info = wx.AboutDialogInfo()
         info.Name = "wxgcc"
-        info.Version = "1.5"
+        info.Version = "1.8"
         info.Copyright = "(C) 2010 Zechao Wang"
         info.Description = wordwrap(
             "The \"wxgcc (wxPython GCC Compiler)\" is a simple C language compiler toolkit which used under Linux."
@@ -792,7 +792,10 @@ class WxgccFrame(wx.Frame):
 
         # get line info
         RangeTxt = self.rtc.GetRange(0, self.rtc.GetInsertionPoint())
-        PositionInfo =  "Row: " + str(len(RangeTxt.split('\n'))) + "    |    " + "Col: " + str(len(RangeTxt.split('\n')[-1])) + "    |    " + "Total Line Numbers: " + str(self.rtc.GetNumberOfLines())
+        if self.FileFlag == 0:
+            PositionInfo =  "Paragraph: " + str(len(RangeTxt.split('\n'))) + "    |    " + "Column: " + str(len(RangeTxt.split('\n')[-1])) + "    |    " + "Total Paragraph: " + str(self.rtc.GetNumberOfLines())
+        else:
+            PositionInfo =  "Row: " + str(len(RangeTxt.split('\n'))) + "    |    " + "Col: " + str(len(RangeTxt.split('\n')[-1])) + "    |    " + "Total Line Numbers: " + str(self.rtc.GetNumberOfLines())
 
         # get the space number in the beginning of previous line
         SpaceNum = 0
