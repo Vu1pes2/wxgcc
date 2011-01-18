@@ -1,3 +1,14 @@
+V1.6
+
+Updates:
+    * Unicode support
+    * display current row/col number info
+    * auto indent support
+    * add full screen function (F11-full screen; F5-run program)
+    * add lock edit function
+    * force quit support
+    * fix some bugs 
+
 ===============================================
 
 V1.5 

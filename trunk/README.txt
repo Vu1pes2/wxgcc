@@ -1,4 +1,4 @@
-This is a simple C language compiling toolkit based wxpython and gcc.
+This is a rich text editor with C/C++ program compiling support.
 
 Befor start the program, you need to confirm the "wxpython" and "gcc" 
 packages have been installed on your Linux host.
