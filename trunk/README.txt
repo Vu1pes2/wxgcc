@@ -1,4 +1,5 @@
-This is a rich text editor with C/C++ program compiling support.
+The "wxgcc" is a GUI toolkit for GCC based wxPython which used under Linux. 
+With that tool beginners can create and compile a C/C++ program very fast.
 
 Befor start the program, you need to confirm the "wxpython" and "gcc" 
 packages have been installed on your Linux host.
@@ -27,4 +28,4 @@ Of course, if the "wxgcc" have no executable privilege，just run:
 
 If have any question, please mailto: zwang@ucrobotics.com 
 
-For more information, please visit: www.ucrobotics.com
+For more information, please visit: http://www.ucrobotics.com/?q=cn/node/97

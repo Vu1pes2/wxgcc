@@ -2,13 +2,13 @@
 # -*- coding: UTF-8 -*-
 #----------------------------------------------------------------------------
 # Name:         wxgcc.py
-# Purpose:      A rich text editor with C/C++ programs compiling support.
+# Purpose:      A GUI toolkit for GCC based wxPython.
 #
 # Author:       Zechao Wang <zwang@ucrobotics.com>
 #
-# Created:      26-Dec-2010
+# Created:      2011-03-12
 # RCS-ID:       
-# Copyright:    (c) 2010 by Zechao Wang
+# Copyright:    (c) 2011 by Zechao Wang
 # Licence:      GPLV2
 #----------------------------------------------------------------------------
 
@@ -17,70 +17,43 @@ import sys
 import wx
 import wx.aui
 import wx.richtext as rt
+from wx import stc
 from wx.lib.wordwrap import wordwrap
+import threading
 
 TmpBin = "/tmp/foo"
 TmpLog = "/tmp/foo.log"
 TmpRes = "/tmp/foo.res"
 
-ID_MB_NEW             = 11
-ID_MB_NEW_C           = 12
-ID_MB_NEW_CPP         = 13
-ID_MB_OPEN            = 14
-#ID_MB_SAVE           = 15
-#ID_MB_SAVE_AS        = 16
+# convert tab to TabLen spaces
+TabLen = 8
 
-#ID_MB_UNDO           = 21  # wx.ID_UNDO
-#ID_MB_REDO           = 22  # wx.ID_REDO
-#ID_MB_CUT            = 23  # wx.ID_CUT
-#ID_MB_PASTE          = 24  # wx.ID_PASTE
-#ID_MB_DEL            = 25  # wx.ID_CLEAR
+# macro definition colour
+DefColor = (205, 0, 205, 255)
+# key word colour
+KeyColor = (0, 205, 0, 255)
+# string clour
+StrColor = (205, 0, 0, 255)
+# comment colour
+ComColor = (0, 0, 205, 255)
 
-ID_MB_BOLD            = 31
-ID_MB_ITALIC          = 32
-ID_MB_UNDERLINE       = 33
-ID_MB_LEFT            = 34
-ID_MB_CENTER          = 35
-ID_MB_RIGHT           = 36
-ID_MB_INDENT_MORE     = 37
-ID_MB_INDENT_LESS     = 38
-ID_MB_INCREASE_SPACE  = 39
-ID_MB_DECREASE_SPACE  = 40
-ID_MB_NORMAL_LINE     = 41
-ID_MB_MORE_LINE       = 42
-ID_MB_DOUBLE_LINE     = 43
-ID_MB_FONT            = 44
+ID_MB_NEW_C           = 11
+ID_MB_NEW_CPP         = 12
+ID_MB_OPEN            = 13
+ID_MB_REPLACE         = 14
+ID_MB_RUN             = 15
 
-ID_MB_REPLACE         = 51
-ID_MB_IMG             = 52
-ID_MB_RUN             = 53
+ID_TB_NEW_C           = 21
+ID_TB_NEW_CPP         = 22
+ID_TB_OPEN            = 23
+ID_TB_REPLACE         = 24
+ID_TB_RUN             = 25
 
-ID_TB_NEW             = 61
-ID_TB_NEW_C           = 62
-ID_TB_NEW_CPP         = 63
-ID_TB_OPEN            = 64
-#ID_TB_SAVE           = 65
-#ID_TB_UNDO           = 66
-#ID_TB_REDO           = 67
-ID_TB_BOLD            = 68
-ID_TB_ITALIC          = 69
-ID_TB_UNDERLINE       = 70
-ID_TB_LEFT            = 71
-ID_TB_CENTER          = 72
-ID_TB_RIGHT           = 73
-ID_TB_INDENT_LESS     = 74
-ID_TB_INDENT_MORE     = 75
-ID_TB_FONT            = 76
-ID_TB_COLOR           = 77
-ID_TB_IMG             = 78
-ID_TB_RUN             = 79
-ID_TB_REPLACE         = 80
+ID_MB_LIST = [ID_MB_NEW_C, ID_MB_NEW_CPP, ID_MB_OPEN, wx.ID_UNDO, wx.ID_REDO, wx.ID_CUT, wx.ID_PASTE, ID_MB_REPLACE, ID_MB_RUN]
 
-ID_MB_LIST = [ID_MB_NEW, ID_MB_NEW_C, ID_MB_NEW_CPP, ID_MB_OPEN, wx.ID_UNDO, wx.ID_REDO, wx.ID_CUT, wx.ID_PASTE, ID_MB_BOLD, ID_MB_ITALIC, ID_MB_UNDERLINE, ID_MB_LEFT, ID_MB_CENTER, ID_MB_RIGHT, ID_MB_INDENT_MORE, ID_MB_INDENT_LESS, ID_MB_INCREASE_SPACE, ID_MB_DECREASE_SPACE, ID_MB_NORMAL_LINE, ID_MB_MORE_LINE, ID_MB_DOUBLE_LINE, ID_MB_FONT, ID_MB_REPLACE, ID_MB_IMG, ID_MB_RUN]
+ID_TB_LIST = [ID_TB_NEW_C, ID_TB_NEW_CPP, ID_TB_OPEN, wx.ID_UNDO, wx.ID_REDO, ID_TB_REPLACE, ID_TB_RUN]
 
-ID_TB_LIST = [ID_TB_NEW, ID_TB_NEW_C, ID_TB_NEW_CPP, ID_TB_OPEN, wx.ID_UNDO, wx.ID_REDO, ID_TB_BOLD, ID_TB_ITALIC, ID_TB_UNDERLINE, ID_TB_LEFT, ID_TB_CENTER, ID_TB_RIGHT, ID_TB_INDENT_LESS, ID_TB_INDENT_MORE, ID_TB_FONT, ID_TB_COLOR, ID_TB_IMG, ID_TB_RUN, ID_TB_REPLACE]
-
-licenseText = """
+LicenseText = """
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
@@ -88,12 +61,18 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 """
 
+# keywords for c/c++
+KeyWords = "and and_eq asm auto bitand bitor bool break case catch char class compl const const_cast continue default delete do double dynamic_cast else enum explicit export extern false float for friend goto if inline int long mutable namespace new not not_eq operator or or_eq private protected public register reinterpret_cast return short signed sizeof static static_cast struct switch template this throw true try typedef typeid typename union unsigned using virtual void volatile wchar_t while xor xor_eq"
+
+ArrList = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
 #----------------------------------------------------------------------
 
 class WxgccFrame(wx.Frame):
     def __init__(self, parent, id=-1):
-        wx.Frame.__init__(self, parent, wx.ID_ANY, title='wxPython GCC ToolKit 1.8', size=(800, 600), style = wx.DEFAULT_FRAME_STYLE)
+        wx.Frame.__init__(self, parent, wx.ID_ANY, title='wxgcc v1.8', size=(800, 600), style = wx.DEFAULT_FRAME_STYLE)
         self.Bind(wx.EVT_CLOSE, self.OnExit)
+        self.Bind(wx.EVT_KEY_UP , self.OnKeyUp);
 
         # set the frame icon
         self.SetIcon(wx.Icon('./icon/wxgcc.ico', wx.BITMAP_TYPE_ICO))
@@ -123,8 +102,12 @@ class WxgccFrame(wx.Frame):
         # create richText box and init: http://docs.wxwidgets.org/stable/wx_wxrichtextctrl.html
         self.rtc = rt.RichTextCtrl(self.panel, style=wx.VSCROLL|wx.HSCROLL|wx.NO_BORDER, size=(-1,300));
         wx.CallAfter(self.rtc.SetFocus)
-        #self.InitC()
-        self.rtc.SetFilename("")
+        self.OnNewC(True)
+
+        # create a new thread to set syntax highlight 
+        #th = MyThread(self.rtc)
+        #th.setDaemon(True)
+        #th.start()
 
         # for detail: http://docs.wxwidgets.org/stable/wx_wxauipaneinfo.html
         self.mgr.AddPane(self.rtc,
@@ -156,8 +139,8 @@ class WxgccFrame(wx.Frame):
     def InitC(self):
         self.rtc.Freeze()
 
-        self.rtc.SetBackgroundColour((207,247,207))
-        self.log.SetBackgroundColour((207,247,207))
+        self.rtc.SetBackgroundColour((236,248,224))
+        self.log.SetBackgroundColour((236,248,224))
 
         self.rtc.WriteText("/*")
         self.rtc.Newline()
@@ -180,10 +163,10 @@ class WxgccFrame(wx.Frame):
         self.rtc.WriteText("{")
         self.rtc.Newline()
 
-        self.rtc.WriteText("    printf(\"Hello C !\\n\");")
+        self.rtc.WriteText("        printf(\"Hello C !\\n\");")
         self.rtc.Newline()
 
-        self.rtc.WriteText("    return 0;")
+        self.rtc.WriteText("        return 0;")
         self.rtc.Newline()
 
         self.rtc.WriteText("}")
@@ -193,8 +176,8 @@ class WxgccFrame(wx.Frame):
     def InitCpp(self):
         self.rtc.Freeze()
 
-        self.rtc.SetBackgroundColour((207,207,247))
-        self.log.SetBackgroundColour((207,207,247))
+        self.rtc.SetBackgroundColour((224,236,248))
+        self.log.SetBackgroundColour((224,236,248))
 
         self.rtc.WriteText("/*")
         self.rtc.Newline()
@@ -217,50 +200,30 @@ class WxgccFrame(wx.Frame):
         self.rtc.WriteText("{")
         self.rtc.Newline()
 
-        self.rtc.WriteText("    std::cout << \"Hello C++ !\\n\";")
+        self.rtc.WriteText("        std::cout << \"Hello C++ !\\n\";")
         self.rtc.Newline()
 
-        self.rtc.WriteText("    return 0;")
+        self.rtc.WriteText("        return 0;")
         self.rtc.Newline()
 
         self.rtc.WriteText("}")
 
         self.rtc.Thaw()
 
-    def OnURL(self, evt):
-        wx.MessageBox(evt.GetString(), "URL Clicked")
-
-    def OnNew(self, evt):
-        if self.WarningDlg(evt):
-            self.rtc.Clear()
-            self.log.Clear()
-            self.rtc.SetBackgroundColour((255,255,255))
-            self.log.SetBackgroundColour((255,255,255))
-            self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
-            self.FileFlag = 0
-            self.LineNumber = self.rtc.GetNumberOfLines()
-            self.rtc.SetFilename("")
-            self.rtc.SetInsertionPoint(0)
-            titleTxt = "[Untitled Txt File] - WxGcc"
-            wx.CallAfter(self.UpdateTitle, titleTxt)
-            self.CtrlRunBars(False)
-            self.CtrlImgBars(True)
-        
     def OnNewC(self, evt):
         if self.WarningDlg(evt):
             self.rtc.Clear()
             self.log.Clear()
             self.InitC()
             self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
-            self.FileFlag = 1
+            self.FileFlag = 0
             self.LineNumber = self.rtc.GetNumberOfLines()
             self.rtc.SetFilename("")
             self.rtc.SetInsertionPoint(0)
-            titleTxt = "[Untitled C File] - WxGcc"
+            self.SyntaxHighlight()
+            titleTxt = "[Untitled C File] - Wxgcc"
             wx.CallAfter(self.UpdateTitle, titleTxt)
             #wx.CallAfter(self.UpdateStatus, "")
-            self.CtrlRunBars(True)
-            self.CtrlImgBars(False)
 
     def OnNewCpp(self, evt):
         if self.WarningDlg(evt):
@@ -268,15 +231,14 @@ class WxgccFrame(wx.Frame):
             self.log.Clear()
             self.InitCpp()
             self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
-            self.FileFlag = 2
+            self.FileFlag = 1
             self.LineNumber = self.rtc.GetNumberOfLines()
             self.rtc.SetFilename("")
             self.rtc.SetInsertionPoint(0)
-            titleTxt = "[Untitled C++ File] - WxGcc"
+            self.SyntaxHighlight()
+            titleTxt = "[Untitled C++ File] - Wxgcc"
             wx.CallAfter(self.UpdateTitle, titleTxt)
             #wx.CallAfter(self.UpdateStatus, "New C++ file")
-            self.CtrlRunBars(True)
-            self.CtrlImgBars(False)
 
     def WarningDlg(self, evt):
         path = self.rtc.GetFilename()
@@ -296,7 +258,7 @@ class WxgccFrame(wx.Frame):
         # This gives us a string suitable for the file dialog based on
         # the file handlers that are loaded
         ##wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=False)
-        wildcard = "Files (*.c;*.cpp;*.txt)|*.c;*.cpp;*.txt"
+        wildcard = "Files (*.c;*.cpp)|*.c;*.cpp"
         dlg = wx.FileDialog(self, "Choose a filename", wildcard=wildcard, style=wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
@@ -311,31 +273,19 @@ class WxgccFrame(wx.Frame):
                     self.rtc.SetFilename(path)
                     self.LineNumber = self.rtc.GetNumberOfLines()
                     self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
-                    titleTxt = "[" + path + "] - WxGcc"
+                    titleTxt = "[" + path + "] - Wxgcc"
                     wx.CallAfter(self.UpdateTitle, titleTxt)
-
                     if path.split('.')[-1] == 'c':
-                        self.FileFlag = 1
-                        self.log.Clear()
-                        self.rtc.SetBackgroundColour((207,247,207))
-                        self.log.SetBackgroundColour((207,247,207))
-                        self.CtrlRunBars(True)
-                        self.CtrlImgBars(False)
-                    elif path.split('.')[-1] == 'cpp':
-                        self.FileFlag = 2
-                        self.log.Clear()
-                        self.rtc.SetBackgroundColour((207,207,247))
-                        self.log.SetBackgroundColour((207,207,247))
-                        self.CtrlRunBars(True)
-                        self.CtrlImgBars(False)
-                    else:
                         self.FileFlag = 0
                         self.log.Clear()
-                        self.rtc.SetBackgroundColour((255,255,255))
-                        self.log.SetBackgroundColour((255,255,255))
-                        self.CtrlRunBars(False)
-                        self.CtrlImgBars(True)
-
+                        self.rtc.SetBackgroundColour((236,248,224))
+                        self.log.SetBackgroundColour((236,248,224))
+                    else:
+                        self.FileFlag = 1
+                        self.log.Clear()
+                        self.rtc.SetBackgroundColour((224,236,248))
+                        self.log.SetBackgroundColour((224,236,248))
+                    self.SyntaxHighlight()
         dlg.Destroy()
         
     def OnFileSave(self, evt):
@@ -346,15 +296,13 @@ class WxgccFrame(wx.Frame):
             f = file(path, 'w')
             f.write(self.FileTxt)
             f.close()
-            titleTxt = "[" + path + "] - WxGcc"
-            wx.CallAfter(self.UpdateTitle, titleTxt)
         else:
             self.OnFileSaveAs(evt)
             return
         
     def OnFileSaveAs(self, evt):
         ##wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=True)
-        wildcard = "Files (*.c;*.cpp;*.txt)|*.c;*.cpp;*.txt"
+        wildcard = "Files (*.c;*.cpp)|*.c;*.cpp"
         dlg = wx.FileDialog(self, "Choose a filename", wildcard=wildcard, style=wx.SAVE)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
@@ -365,185 +313,32 @@ class WxgccFrame(wx.Frame):
                 ##if not path.endswith(ext):
                 ##    path += '.' + ext
 
+                # auto add file extention
+                if path.split('.')[-1] != 'c' and path.split('.')[-1] != 'cpp':
+                    if self.FileFlag == 0:
+                        path += ".c"
+                    else:
+                        path += ".cpp"
+
                 #self.rtc.SaveFile(path, fileType)
                 self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
                 f = file(path, 'w')
                 f.write(str(self.FileTxt))
                 f.close()
-                titleTxt = "[" + path + "] - WxGcc"
+                titleTxt = "[" + path + "] - Wxgcc"
                 wx.CallAfter(self.UpdateTitle, titleTxt)
-
         dlg.Destroy()
                 
     def OnExit(self, evt):
         if self.WarningDlg(evt):
             self.Destroy()
 
+    def OnKeyUp(self, evt):
+        if evt.GetKeyCode() == wx.WXK_SPACE or evt.GetKeyCode() == wx.WXK_RETURN:
+            self.SyntaxHighlight()
+
     def OnForceExit(self, evt):
         sys.exit(0)
-
-    def OnBold(self, evt):
-        self.rtc.ApplyBoldToSelection()
-        
-    def OnItalic(self, evt): 
-        self.rtc.ApplyItalicToSelection()
-        
-    def OnUnderline(self, evt):
-        self.rtc.ApplyUnderlineToSelection()
-        
-    def OnAlignLeft(self, evt):
-        self.rtc.ApplyAlignmentToSelection(rt.TEXT_ALIGNMENT_LEFT)
-        
-    def OnAlignRight(self, evt):
-        self.rtc.ApplyAlignmentToSelection(rt.TEXT_ALIGNMENT_RIGHT)
-        
-    def OnAlignCenter(self, evt):
-        self.rtc.ApplyAlignmentToSelection(rt.TEXT_ALIGNMENT_CENTRE)
-        
-    def OnIndentMore(self, evt):
-        attr = rt.TextAttrEx()
-        attr.SetFlags(rt.TEXT_ATTR_LEFT_INDENT)
-        ip = self.rtc.GetInsertionPoint()
-        if self.rtc.GetStyle(ip, attr):
-            r = rt.RichTextRange(ip, ip)
-            if self.rtc.HasSelection():
-                r = self.rtc.GetSelectionRange()
-
-            attr.SetLeftIndent(attr.GetLeftIndent() + 100)
-            attr.SetFlags(rt.TEXT_ATTR_LEFT_INDENT)
-            self.rtc.SetStyle(r, attr)
-        
-    def OnIndentLess(self, evt):
-        attr = rt.TextAttrEx()
-        attr.SetFlags(rt.TEXT_ATTR_LEFT_INDENT)
-        ip = self.rtc.GetInsertionPoint()
-        if self.rtc.GetStyle(ip, attr):
-            r = rt.RichTextRange(ip, ip)
-            if self.rtc.HasSelection():
-                r = self.rtc.GetSelectionRange()
-
-        if attr.GetLeftIndent() >= 100:
-            attr.SetLeftIndent(attr.GetLeftIndent() - 100)
-            attr.SetFlags(rt.TEXT_ATTR_LEFT_INDENT)
-            self.rtc.SetStyle(r, attr)
-        
-    def OnParagraphSpacingMore(self, evt):
-        attr = rt.TextAttrEx()
-        attr.SetFlags(rt.TEXT_ATTR_PARA_SPACING_AFTER)
-        ip = self.rtc.GetInsertionPoint()
-        if self.rtc.GetStyle(ip, attr):
-            r = rt.RichTextRange(ip, ip)
-            if self.rtc.HasSelection():
-                r = self.rtc.GetSelectionRange()
-
-            attr.SetParagraphSpacingAfter(attr.GetParagraphSpacingAfter() + 20);
-            attr.SetFlags(rt.TEXT_ATTR_PARA_SPACING_AFTER)
-            self.rtc.SetStyle(r, attr)
-        
-    def OnParagraphSpacingLess(self, evt):
-        attr = rt.TextAttrEx()
-        attr.SetFlags(rt.TEXT_ATTR_PARA_SPACING_AFTER)
-        ip = self.rtc.GetInsertionPoint()
-        if self.rtc.GetStyle(ip, attr):
-            r = rt.RichTextRange(ip, ip)
-            if self.rtc.HasSelection():
-                r = self.rtc.GetSelectionRange()
-
-            if attr.GetParagraphSpacingAfter() >= 20:
-                attr.SetParagraphSpacingAfter(attr.GetParagraphSpacingAfter() - 20);
-                attr.SetFlags(rt.TEXT_ATTR_PARA_SPACING_AFTER)
-                self.rtc.SetStyle(r, attr)
-        
-    def OnLineSpacingSingle(self, evt): 
-        attr = rt.TextAttrEx()
-        attr.SetFlags(rt.TEXT_ATTR_LINE_SPACING)
-        ip = self.rtc.GetInsertionPoint()
-        if self.rtc.GetStyle(ip, attr):
-            r = rt.RichTextRange(ip, ip)
-            if self.rtc.HasSelection():
-                r = self.rtc.GetSelectionRange()
-
-            attr.SetFlags(rt.TEXT_ATTR_LINE_SPACING)
-            attr.SetLineSpacing(10)
-            self.rtc.SetStyle(r, attr)
-                
-    def OnLineSpacingHalf(self, evt):
-        attr = rt.TextAttrEx()
-        attr.SetFlags(rt.TEXT_ATTR_LINE_SPACING)
-        ip = self.rtc.GetInsertionPoint()
-        if self.rtc.GetStyle(ip, attr):
-            r = rt.RichTextRange(ip, ip)
-            if self.rtc.HasSelection():
-                r = self.rtc.GetSelectionRange()
-
-            attr.SetFlags(rt.TEXT_ATTR_LINE_SPACING)
-            attr.SetLineSpacing(15)
-            self.rtc.SetStyle(r, attr)
-        
-    def OnLineSpacingDouble(self, evt):
-        attr = rt.TextAttrEx()
-        attr.SetFlags(rt.TEXT_ATTR_LINE_SPACING)
-        ip = self.rtc.GetInsertionPoint()
-        if self.rtc.GetStyle(ip, attr):
-            r = rt.RichTextRange(ip, ip)
-            if self.rtc.HasSelection():
-                r = self.rtc.GetSelectionRange()
-
-            attr.SetFlags(rt.TEXT_ATTR_LINE_SPACING)
-            attr.SetLineSpacing(20)
-            self.rtc.SetStyle(r, attr)
-
-    def OnFont(self, evt):
-        if not self.rtc.HasSelection():
-            return
-
-        r = self.rtc.GetSelectionRange()
-        fontData = wx.FontData()
-        fontData.EnableEffects(False)
-        attr = rt.TextAttrEx()
-        attr.SetFlags(rt.TEXT_ATTR_FONT)
-        if self.rtc.GetStyle(self.rtc.GetInsertionPoint(), attr):
-            fontData.SetInitialFont(attr.GetFont())
-
-        dlg = wx.FontDialog(self, fontData)
-        if dlg.ShowModal() == wx.ID_OK:
-            fontData = dlg.GetFontData()
-            font = fontData.GetChosenFont()
-            if font:
-                attr.SetFlags(rt.TEXT_ATTR_FONT)
-                attr.SetFont(font)
-                self.rtc.SetStyle(r, attr)
-        dlg.Destroy()
-
-    def OnColour(self, evt):
-        colourData = wx.ColourData()
-        attr = rt.TextAttrEx()
-        attr.SetFlags(rt.TEXT_ATTR_TEXT_COLOUR)
-        if self.rtc.GetStyle(self.rtc.GetInsertionPoint(), attr):
-            colourData.SetColour(attr.GetTextColour())
-
-        dlg = wx.ColourDialog(self, colourData)
-        if dlg.ShowModal() == wx.ID_OK:
-            colourData = dlg.GetColourData()
-            colour = colourData.GetColour()
-            if colour:
-                if not self.rtc.HasSelection():
-                    self.rtc.BeginTextColour(colour)
-                else:
-                    r = self.rtc.GetSelectionRange()
-                    attr.SetFlags(rt.TEXT_ATTR_TEXT_COLOUR)
-                    attr.SetTextColour(colour)
-                    self.rtc.SetStyle(r, attr)
-        dlg.Destroy()
-
-    def OnImg(self, evt):
-        wildcard = "Images (*.jpg;*.png;*.gif;*.bmp)|*.jpg;*.png;*.gif;*.bmp"
-        dlg = wx.FileDialog(self, "Choose a image", wildcard=wildcard, style=wx.OPEN)
-        if dlg.ShowModal() == wx.ID_OK:
-            path = dlg.GetPath()
-            if path:
-                self.rtc.WriteImage(wx.Image(path, wx.BITMAP_TYPE_ANY))
-        dlg.Destroy()
 
     def OnRun(self, evt):
         # compile the exist file in its same directory
@@ -552,10 +347,10 @@ class WxgccFrame(wx.Frame):
             OrigFilePath = self.rtc.GetFilename() #.encode("utf-8")
 
         # get tmp source file path
-        if self.FileFlag == 1:
+        if self.FileFlag == 0:
             CC = "gcc"
             FilePath = TmpBin + ".c"
-        elif self.FileFlag == 2:
+        elif self.FileFlag == 1:
             CC = "g++"
             FilePath = TmpBin + ".cpp"
 
@@ -618,7 +413,7 @@ class WxgccFrame(wx.Frame):
 
     def OnUpdateFullScreen(self, evt):
         evt.Check(self.FullScreen)
-        
+
     def OnShowFind(self, evt):
         data = wx.FindReplaceData()
 
@@ -751,39 +546,16 @@ class WxgccFrame(wx.Frame):
         info = wx.AboutDialogInfo()
         info.Name = "wxgcc"
         info.Version = "1.8"
-        info.Copyright = "(C) 2010 Zechao Wang"
-        info.Description = wordwrap(
-            "The \"wxgcc (wxPython GCC Compiler)\" is a simple C language compiler toolkit which used under Linux."
-            "With that tool user can create and compile a C program very fast."
-            
-            "\n\nBesides a C compiler, it's also a rich text editor and support styled text and images editing.", 
-            350, wx.ClientDC(self))
-        info.WebSite = ("http://www.ucrobotics.com", "wxgcc home page")
+        info.Copyright = "(C) 2011 Zechao Wang"
+        info.Description = wordwrap("The \"wxgcc\" is a GUI toolkit for GCC based wxPython which used under Linux, with that tool user can create and compile a C/C++ program very fast.", 350, wx.ClientDC(self))
+        info.WebSite = ("http://code.google.com/p/wxgcc/", "wxgcc home page")
         info.Developers = [ "Zechao Wang <zwang@ucrobotics.com>" ]
 
-        info.License = wordwrap(licenseText, 500, wx.ClientDC(self))
+        info.License = wordwrap(LicenseText, 500, wx.ClientDC(self))
 
         # Then we call wx.AboutBox giving it that info object
         wx.AboutBox(info)
 
-    def OnUpdateBold(self, evt):
-        evt.Check(self.rtc.IsSelectionBold())
-    
-    def OnUpdateItalic(self, evt): 
-        evt.Check(self.rtc.IsSelectionItalics())
-    
-    def OnUpdateUnderline(self, evt): 
-        evt.Check(self.rtc.IsSelectionUnderlined())
-    
-    def OnUpdateAlignLeft(self, evt):
-        evt.Check(self.rtc.IsSelectionAligned(rt.TEXT_ALIGNMENT_LEFT))
-        
-    def OnUpdateAlignCenter(self, evt):
-        evt.Check(self.rtc.IsSelectionAligned(rt.TEXT_ALIGNMENT_CENTRE))
-        
-    def OnUpdateAlignRight(self, evt):
-        evt.Check(self.rtc.IsSelectionAligned(rt.TEXT_ALIGNMENT_RIGHT))
-    
     def ForwardEvent(self, evt):
         # The RichTextCtrl can handle menu and update events for undo,
         # redo, cut, copy, paste, delete, and select all, so just
@@ -792,10 +564,23 @@ class WxgccFrame(wx.Frame):
 
         # get line info
         RangeTxt = self.rtc.GetRange(0, self.rtc.GetInsertionPoint())
-        if self.FileFlag == 0:
-            PositionInfo =  "Paragraph: " + str(len(RangeTxt.split('\n'))) + "    |    " + "Column: " + str(len(RangeTxt.split('\n')[-1])) + "    |    " + "Total Paragraph: " + str(self.rtc.GetNumberOfLines())
-        else:
-            PositionInfo =  "Row: " + str(len(RangeTxt.split('\n'))) + "    |    " + "Col: " + str(len(RangeTxt.split('\n')[-1])) + "    |    " + "Total Line Numbers: " + str(self.rtc.GetNumberOfLines())
+        PositionInfo =  "Row: " + str(len(RangeTxt.split('\n'))) + "    |    " + "Col: " + str(len(RangeTxt.split('\n')[-1])) + "    |    " + "Total Line Numbers: " + str(self.rtc.GetNumberOfLines())
+
+        # replace the tab with TabLen space
+        start = 0
+        end = self.rtc.GetLastPosition()
+        while True:
+            # textStr will change after replace for end position is changed
+            textStr = self.rtc.GetRange(0, end)
+            loc = textStr.find('\t', start, end)
+            if loc == -1 or start >= end:
+                break
+            self.rtc.ShowPosition(loc)
+            self.rtc.SetSelection(loc, loc + 1)
+            self.rtc.Replace(loc, loc + 1, " " * TabLen)
+            start = loc + TabLen
+            # after textStr changed, end need to be updated too
+            end = self.rtc.GetLastPosition()
 
         # get the space number in the beginning of previous line
         SpaceNum = 0
@@ -813,6 +598,133 @@ class WxgccFrame(wx.Frame):
         # update status bar
         wx.CallAfter(self.UpdateStatus, PositionInfo, 1)
 
+    def SyntaxHighlight(self):
+        end = self.rtc.GetLastPosition()
+        textStr = self.rtc.GetRange(0, end).lower()
+
+        attr = rt.TextAttrEx()
+        attr.SetFlags(rt.TEXT_ATTR_TEXT_COLOUR)
+
+        # First: set system default colour
+        start = 0
+        SysColor = wx.SystemSettings_GetColour(wx.SYS_COLOUR_MENUTEXT)
+        attr.SetTextColour(SysColor)
+        self.rtc.SetStyle((start,end), attr)
+
+        # Second: set macro definition colour
+        attr.SetTextColour(DefColor)
+        start = 0
+        while True:
+            loc = textStr.find('#', start, end)
+            if loc == -1 or start >= end:
+                break
+            locend = loc + 1
+            while locend < end and textStr[locend] != '\n':
+                locend += 1
+            self.rtc.SetStyle((loc,locend), attr)
+            start = locend + 1
+
+        # Third: set keyword colour
+        attr.SetTextColour(KeyColor)
+        for key in KeyWords.split(' '):
+            start = 0
+            while True:
+                loc = textStr.find(key, start, end)
+                if loc == -1 or start >= end:
+                    break
+                locend = loc + len(key) 
+                if loc == 0 and textStr[locend] == ' ':
+                    self.rtc.SetStyle((loc,locend), attr)
+                if loc > 0 and locend < end and textStr[loc-1] not in ArrList and textStr[locend] not in ArrList:
+                    self.rtc.SetStyle((loc,locend), attr)
+                start = locend 
+
+        # Four: set string colour
+        attr.SetTextColour(StrColor)
+        arr1 = []
+        start = 0
+        while start <= end:
+            loc = textStr.find('"', start, end)
+            if loc == -1 or start >= end:
+                break
+            arr1.append(loc)
+            start = loc + 1
+        if len(arr1) > 0 and len(arr1) % 2 != 0:
+            arr1.append(end)
+        i = len(arr1)
+        j = 0
+        while i > 0 and j < i:
+            self.rtc.SetStyle((arr1[j], arr1[j+1]+1), attr)
+            j += 2
+
+        arr2 = []
+        start = 0
+        while start <= end:
+            loc = textStr.find("'", start, end)
+            if loc == -1 or start >= end:
+                break
+            arr2.append(loc)
+            start = loc + 1
+        if len(arr2) > 0 and len(arr2) % 2 != 0:
+            arr2.append(end)
+        i = len(arr2)
+        j = 0
+        while i > 0 and j < i:
+            self.rtc.SetStyle((arr2[j], arr2[j+1]+1), attr)
+            j += 2
+            
+        # Five: set comment colour
+        attr.SetTextColour(ComColor)
+        start = 0
+        while True:
+            loc = textStr.find('//', start, end)
+            if loc == -1 or start >= end:
+                break
+            locend = loc + 1
+            while locend < end and textStr[locend] != '\n':
+                locend += 1
+            self.rtc.SetStyle((loc,locend), attr)
+            start = locend + 1
+
+        arr3 = []
+        start = 0
+        while start <= end:
+            loc = textStr.find('/*', start, end)
+            if loc == -1 or start >= end:
+                break
+            if textStr[loc-1] != '/': #for case: //*point = a
+                arr3.append(loc)
+            start = loc + 1
+
+        arr4 = []
+        start = 0
+        while start <= end:
+            loc = textStr.find('*/', start, end)
+            if loc == -1 or start >= end:
+                break
+            arr4.append(loc)
+            start = loc + 1
+
+        if len(arr3) == len(arr4) and len(arr3) > 0:
+            i = len(arr3)
+            j = 0
+            while j < i:
+                self.rtc.SetStyle((arr3[j], arr4[j]+2), attr)
+                j += 1
+        if len(arr3) > len(arr4):
+            arr4.append(end)
+            i = len(arr4)
+            j = 0
+            while j < i:
+                self.rtc.SetStyle((arr3[j], arr4[j]+2), attr)
+                j += 1
+        if len(arr3) < len(arr4) and len(arr3) > 0:
+            i = len(arr3)
+            j = 0
+            while j < i:
+                self.rtc.SetStyle((arr3[j], arr4[j]+2), attr)
+                j += 1
+
     def MakeMenuBar(self):
         def doBind(item, handler, updateUI=None):
             self.Bind(wx.EVT_MENU, handler, item)
@@ -820,7 +732,6 @@ class WxgccFrame(wx.Frame):
                 self.Bind(wx.EVT_UPDATE_UI, updateUI, item)
             
         fileMenu = wx.Menu()
-        doBind( fileMenu.Append(ID_MB_NEW, "&New \tCtrl+T", "Create a Txt file"), self.OnNew )
         doBind( fileMenu.Append(ID_MB_NEW_C, "&New C\tCtrl+N", "Create a C file"), self.OnNewC )
         doBind( fileMenu.Append(ID_MB_NEW_CPP, "&New C++\tCtrl+P", "Create a C++ file"), self.OnNewCpp )
         doBind( fileMenu.Append(ID_MB_OPEN, "&Open\tCtrl+O", "Open a file"), self.OnFileOpen )
@@ -842,36 +753,14 @@ class WxgccFrame(wx.Frame):
         editMenu.AppendSeparator()
         doBind( editMenu.Append(wx.ID_SELECTALL, "Select A&ll\tCtrl+A"), self.ForwardEvent, self.ForwardEvent )
 
-        formatMenu = wx.Menu()
-        doBind( formatMenu.AppendCheckItem(ID_MB_BOLD, "&Bold\tCtrl+B"), self.OnBold, self.OnUpdateBold)
-        doBind( formatMenu.AppendCheckItem(ID_MB_ITALIC, "&Italic\tCtrl+I"), self.OnItalic, self.OnUpdateItalic)
-        doBind( formatMenu.AppendCheckItem(ID_MB_UNDERLINE, "&Underline\tCtrl+U"), self.OnUnderline, self.OnUpdateUnderline)
-        formatMenu.AppendSeparator()
-        doBind( formatMenu.AppendCheckItem(ID_MB_LEFT, "L&eft Align"), self.OnAlignLeft, self.OnUpdateAlignLeft)
-        doBind( formatMenu.AppendCheckItem(ID_MB_CENTER, "&Centre"), self.OnAlignCenter, self.OnUpdateAlignCenter)
-        doBind( formatMenu.AppendCheckItem(ID_MB_RIGHT, "&Right Align"), self.OnAlignRight, self.OnUpdateAlignRight)
-        formatMenu.AppendSeparator()
-        doBind( formatMenu.Append(ID_MB_INDENT_MORE, "Indent &More"), self.OnIndentMore)
-        doBind( formatMenu.Append(ID_MB_INDENT_LESS, "Indent &Less"), self.OnIndentLess)
-        formatMenu.AppendSeparator()
-        doBind( formatMenu.Append(ID_MB_INCREASE_SPACE, "Increase Paragraph &Spacing"), self.OnParagraphSpacingMore)
-        doBind( formatMenu.Append(ID_MB_DECREASE_SPACE, "Decrease &Paragraph Spacing"), self.OnParagraphSpacingLess)
-        formatMenu.AppendSeparator()
-        doBind( formatMenu.Append(ID_MB_NORMAL_LINE, "Normal Line Spacing"), self.OnLineSpacingSingle)
-        doBind( formatMenu.Append(ID_MB_MORE_LINE, "1.5 Line Spacing"), self.OnLineSpacingHalf)
-        doBind( formatMenu.Append(ID_MB_DOUBLE_LINE, "Double Line Spacing"), self.OnLineSpacingDouble)
-        formatMenu.AppendSeparator()
-        doBind( formatMenu.Append(ID_MB_FONT, "&Font..."), self.OnFont)
-
         toolMenu = wx.Menu()
         doBind( toolMenu.Append(-1, "&Find...\tCtrl+F"), self.OnShowFind )
         doBind( toolMenu.Append(ID_MB_REPLACE, "&Replace...\tCtrl+R"), self.OnShowReplace )
         toolMenu.AppendSeparator()
-        doBind( toolMenu.Append(ID_MB_IMG, "&Insert Images\tCtrl+M", "Insert images"), self.OnImg)
-        doBind( toolMenu.Append(ID_MB_RUN, "&Run C/C++\tF5", "Compile and run C/C++ files"), self.OnRun)
-        toolMenu.AppendSeparator()
         doBind( toolMenu.AppendCheckItem(-1, "&Lock Edit\tCtrl+L", "Lock edit"), self.OnLock, self.OnUpdateLock)
         doBind( toolMenu.AppendCheckItem(-1, "&Full Screen\tF11", "Set frame full screen"), self.OnFullScreen, self.OnUpdateFullScreen)
+        toolMenu.AppendSeparator()
+        doBind( toolMenu.Append(ID_MB_RUN, "&Run C/C++\tF5", "Compile and run C/C++ files"), self.OnRun)
 
         helpMenu = wx.Menu()
         doBind( helpMenu.Append(-1, "&About"), self.OnAbout)
@@ -879,12 +768,9 @@ class WxgccFrame(wx.Frame):
         self.mb = wx.MenuBar()
         self.mb.Append(fileMenu, "&File")
         self.mb.Append(editMenu, "&Edit")
-        self.mb.Append(formatMenu, "F&ormat")
         self.mb.Append(toolMenu, "&Tool")
         self.mb.Append(helpMenu, "&Help")
         self.SetMenuBar(self.mb)
-
-        self.mb.Enable(ID_MB_RUN, False)
 
     def MakeToolBar(self):
         def doBind(item, handler, updateUI=None):
@@ -893,7 +779,6 @@ class WxgccFrame(wx.Frame):
                 self.Bind(wx.EVT_UPDATE_UI, updateUI, item)
         
         self.tbar = self.CreateToolBar()
-        doBind( self.tbar.AddTool(ID_TB_NEW, wx.Bitmap("./icon/new.png"), shortHelpString="New Txt"), self.OnNew)
         doBind( self.tbar.AddTool(ID_TB_NEW_C, wx.Bitmap("./icon/c.png"), shortHelpString="New C"), self.OnNewC)
         doBind( self.tbar.AddTool(ID_TB_NEW_CPP, wx.Bitmap("./icon/cpp.png"), shortHelpString="New C++"), self.OnNewCpp)
         self.tbar.AddSeparator()
@@ -903,31 +788,13 @@ class WxgccFrame(wx.Frame):
         doBind( self.tbar.AddTool(wx.ID_UNDO, wx.Bitmap("./icon/undo.png"), shortHelpString="Undo"), self.ForwardEvent, self.ForwardEvent)
         doBind( self.tbar.AddTool(wx.ID_REDO, wx.Bitmap("./icon/redo.png"), shortHelpString="Redo"), self.ForwardEvent, self.ForwardEvent)
         self.tbar.AddSeparator()
-        doBind( self.tbar.AddTool(ID_TB_BOLD, wx.Bitmap("./icon/bold.png"), isToggle=True, shortHelpString="Bold"), self.OnBold, self.OnUpdateBold)
-        doBind( self.tbar.AddTool(ID_TB_ITALIC, wx.Bitmap("./icon/italic.png"), isToggle=True, shortHelpString="Italic"), self.OnItalic, self.OnUpdateItalic)
-        doBind( self.tbar.AddTool(ID_TB_UNDERLINE, wx.Bitmap("./icon/underline.png"), isToggle=True, shortHelpString="Underline"), self.OnUnderline, self.OnUpdateUnderline)
-        self.tbar.AddSeparator()
-        doBind( self.tbar.AddTool(ID_TB_LEFT, wx.Bitmap("./icon/left.png"), isToggle=True, shortHelpString="Align Left"), self.OnAlignLeft, self.OnUpdateAlignLeft)
-        doBind( self.tbar.AddTool(ID_TB_CENTER, wx.Bitmap("./icon/center.png"), isToggle=True, shortHelpString="Center"), self.OnAlignCenter, self.OnUpdateAlignCenter)
-        doBind( self.tbar.AddTool(ID_TB_RIGHT, wx.Bitmap("./icon/right.png"), isToggle=True, shortHelpString="Align Right"), self.OnAlignRight, self.OnUpdateAlignRight)
-        self.tbar.AddSeparator()
-        doBind( self.tbar.AddTool(ID_TB_INDENT_LESS, wx.Bitmap("./icon/indent-less.png"), shortHelpString="Indent Less"), self.OnIndentLess)
-        doBind( self.tbar.AddTool(ID_TB_INDENT_MORE, wx.Bitmap("./icon/indent-more.png"), shortHelpString="Indent More"), self.OnIndentMore)
-        self.tbar.AddSeparator()
-        doBind( self.tbar.AddTool(ID_TB_FONT, wx.Bitmap("./icon/font.png"),  shortHelpString="Font"), self.OnFont)
-        doBind( self.tbar.AddTool(ID_TB_COLOR, wx.Bitmap("./icon/colour.png"), shortHelpString="Font Colour"), self.OnColour)
-        self.tbar.AddSeparator()
-        doBind( self.tbar.AddTool(ID_TB_IMG, wx.Bitmap("./icon/img.png"), shortHelpString="Insert Images"), self.OnImg)
-        doBind( self.tbar.AddTool(ID_TB_RUN, wx.Bitmap("./icon/run.png"), shortHelpString="Run C/C++"), self.OnRun)
-        self.tbar.AddSeparator()
         doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/find.png"), shortHelpString="Find"), self.OnShowFind)
         doBind( self.tbar.AddTool(ID_TB_REPLACE, wx.Bitmap("./icon/replace.png"), shortHelpString="Replace"), self.OnShowReplace)
         self.tbar.AddSeparator()
-        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/lock.png"), isToggle=True, shortHelpString="lock/unlock edit"), self.OnLock, self.OnUpdateLock)
+        doBind( self.tbar.AddTool(ID_TB_RUN, wx.Bitmap("./icon/run.png"), shortHelpString="Run C/C++"), self.OnRun)
+        doBind( self.tbar.AddTool(-1, wx.Bitmap("./icon/lock.png"), isToggle=True, shortHelpString="Lock/Unlock Edit"), self.OnLock, self.OnUpdateLock)
 
         self.tbar.Realize()
-
-        self.tbar.EnableTool(ID_TB_RUN, False)
 
     def UpdateStatus(self, msg, num):
         self.StatusBar.SetStatusText(msg, num)
@@ -943,14 +810,16 @@ class WxgccFrame(wx.Frame):
         for iditem in idlist:
             self.tbar.EnableTool(iditem, flag)
 
-    def CtrlRunBars(self, flag):
-        self.mb.Enable(ID_MB_RUN, flag)
-        self.tbar.EnableTool(ID_TB_RUN, flag)
 
-    def CtrlImgBars(self, flag):
-        self.mb.Enable(ID_MB_IMG, flag)
-        self.tbar.EnableTool(ID_TB_IMG, flag)
+class MyThread(threading.Thread):
+    def __init__(self, rtc):
+        self.active = False
+        self.rtc = rtc
+        threading.Thread.__init__(self)
 
+    def run(self):
+        # do something ...
+        pass
 
 #----------------------------------------------------------------------
 
