@@ -1,3 +1,13 @@
+V1.8：
+
+    * Removed the rich text feature and only support C/C++ edit
+    * Syntax highlight support for C/C++ program
+    * Fixed the tab key bug (convert tab to 8 space)
+    * Auto add suffix for C/C++ program when save
+    * Update logo and tool bar icons 
+
+===============================================
+
 V1.6
 
 Updates:
