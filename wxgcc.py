@@ -336,6 +336,10 @@ class WxgccFrame(wx.Frame):
     def OnKeyUp(self, evt):
         if evt.GetKeyCode() == wx.WXK_SPACE or evt.GetKeyCode() == wx.WXK_RETURN:
             self.SyntaxHighlight()
+        if evt.GetKeyCode() == wx.WXK_BACK:
+            self.DelPrevTab()
+        #if evt.GetKeyCode() == wx.WXK_DELETE:
+        #    self.DelNextTab()
 
     def OnForceExit(self, evt):
         sys.exit(0)
@@ -724,6 +728,48 @@ class WxgccFrame(wx.Frame):
             while j < i:
                 self.rtc.SetStyle((arr3[j], arr4[j]+2), attr)
                 j += 1
+
+    def DelPrevTab(self):
+        RangeTxt = self.rtc.GetRange(0, self.rtc.GetInsertionPoint())
+        # get the space number in the previous of current point
+        SpaceNum = 0
+        loc = self.rtc.GetInsertionPoint()
+        i = loc
+        while i > 0 and RangeTxt[i - 1] == " ":
+            i -= 1
+            SpaceNum += 1
+        if SpaceNum % 8 == 7: # OnkeyUp need 7 space, OnKeyDown need 8 space
+            if loc == 7:
+                self.rtc.ShowPosition(0)
+                self.rtc.SetSelection(0, 7)
+                self.rtc.Replace(0, 7, " ")
+            else:
+                self.rtc.ShowPosition(loc - 8)
+                self.rtc.SetSelection(loc - 8, loc)
+                self.rtc.Replace(loc - 8, loc, RangeTxt[loc - 8])
+
+    """
+    def DelNextTab(self):
+        loc = self.rtc.GetInsertionPoint()
+        end = self.rtc.GetLastPosition()
+        i = loc
+        RangeTxt = self.rtc.GetRange(0, end)
+        # get the space number in the next of current point
+        SpaceNum = 0
+        while i < end and RangeTxt[i] == " ":
+            i += 1
+            SpaceNum += 1
+        print SpaceNum
+        if SpaceNum >= 7 and SpaceNum % 8 != 0: # OnkeyUp need 7 space, OnKeyDown need 8 space
+            if loc == end - 7:
+                self.rtc.ShowPosition(loc)
+                self.rtc.SetSelection(loc, end)
+                self.rtc.Replace(loc, end, " ")
+            else:
+                self.rtc.ShowPosition(loc)
+                self.rtc.SetSelection(loc, loc + 8)
+                self.rtc.Replace(loc, loc + 8, RangeTxt[loc + 8])
+    """
 
     def MakeMenuBar(self):
         def doBind(item, handler, updateUI=None):
