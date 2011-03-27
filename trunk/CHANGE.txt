@@ -1,3 +1,8 @@
+V1.8.1：
+    * Backspace will delete a tab (8 space) at one time
+
+===============================================
+
 V1.8：
 
     * Removed the rich text feature and only support C/C++ edit
