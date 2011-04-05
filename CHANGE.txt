@@ -1,3 +1,7 @@
+V1.8.5:
+    * Support MS Windows platform
+    * Fix some micro bug
+
 V1.8.1：
     * Backspace will delete a tab (8 space) at one time
 
