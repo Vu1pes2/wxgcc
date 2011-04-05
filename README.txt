@@ -1,5 +1,5 @@
-The "wxgcc" is a GUI toolkit for GCC based wxPython which can be used under 
-Windows and Linux. 
+The "wxgcc" is a GUI toolkit for GCC based wxPython which support 
+multi-platform(Windows/Linux). 
 
 With that tool users can create and compile a C/C++ program very fast.
 
