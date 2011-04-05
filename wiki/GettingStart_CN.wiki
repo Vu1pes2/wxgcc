@@ -2,7 +2,7 @@ Wxgcc是一个夸平台（Windows/Linux）的GCC编译器图形前端软件，�
 
 在运行wxgcc程序之前，请先确认在你的系统中是否已经安装了Python, wxPython以及GCC编译环境。
 
-～对于Ubuntu/Linux用户～
+=== 对于Ubuntu/Linux用户 ===
   可以通过如下命令安装wxPython:
 {{{
     $ sudo aptitude install python-wxgtk2.8 libwxgtk2.8-dev python-wxtools libwxbase2.8-0 libwxgtk2.8-0 python-wxglade
@@ -16,14 +16,14 @@ Wxgcc是一个夸平台（Windows/Linux）的GCC编译器图形前端软件，�
     $ python wxgcc.py &
 }}}
 
-～对于Windows用户(注意从v1.8.5开始才支持Windows)～
+=== 对于Windows用户(注意从v1.8.5开始才支持Windows) ===
   a) 下载安装mingw-get-inst-20110316.exe： http://sourceforge.net/projects/mingw/files/Automated%20MinGW%20Installer/mingw-get-inst/mingw-get-inst-20110316/
 
-  注意：
-    1. 有些杀毒软件（如诺顿）会自动删除上面下载的mingw可执行文件，所以你可能需要先关闭杀毒工具，然后再下载安装。
-    2. 安装过程进入到"Select Components"画面时，需要选中C++模块。
-    3. 安装过程中需要下载一些软件包，所以请确保网络畅通。
-    4. 其它安装选项默认即可
+  注意：<br>
+    1. 有些杀毒软件（如诺顿）会自动删除上面下载的mingw可执行文件，所以你可能需要先关闭杀毒工具，然后再下载安装。<br>
+    2. 安装过程进入到"Select Components"画面时，需要选中C++模块。<br>
+    3. 安装过程中需要下载一些软件包，所以请确保网络畅通。<br>
+    4. 其它安装选项默认即可。
 
   安装结束后，需要将路径“C:\MinGW\bin”添加到PATH环境变量之中（"我的电脑"属性->高级->环境变量->系统变量->PATH的最后添加：";C:\MinGW\bin"，注意前面的分号）；然后就可以“运行->CMD”，输入"gcc -v"或者"g++ -v"就能看到gcc/g++的版本信息了。
 
@@ -37,5 +37,5 @@ Wxgcc是一个夸平台（Windows/Linux）的GCC编译器图形前端软件，�
 
   然后就可以通过双击wxgcc.py文件启动该程序了。
 
-有关于wxgcc的任何疑问请发Email至：zwang@ucrobotics.com
+有关于wxgcc的任何疑问请发Email至：zwang@ucrobotics.com<br>
 关于wxgcc的更多信息请访问：http://www.ucrobotics.com/?q=cn/forum/13 
