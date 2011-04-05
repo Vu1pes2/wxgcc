@@ -23,10 +23,10 @@ Befor start the program, you need to confirm the "wxpython" and "gcc" packages h
   a) Download and install mingw-get-inst-20110316.exe from:
 http://sourceforge.net/projects/mingw/files/Automated%20MinGW%20Installer/mingw-get-inst/mingw-get-inst-20110316/
 
-  NOTE:<br>
-    * Antivirus Software such as Norton will delete the mingw exe file automatically, so you may need to disable your Antivirus Software before installation.<br>
-    * When displaying the "Select Components" during installation, you need to select the "C++" module.<br>
-    * Some packages need to be downloaded when installing, so make sure your Internet can works well.<br>
+  NOTE:
+    * Antivirus Software such as Norton will delete the mingw exe file automatically, so you may need to disable your Antivirus Software before installation.
+    * When displaying the "Select Components" during installation, you need to select the "C++" module.
+    * Some packages need to be downloaded when installing, so make sure your Internet can works well.
     * The default value could be used for the other options.
 
   After finished installation, you need to append "C:\MinGW\bin" to the PATH environmnet variable.
