@@ -14,7 +14,7 @@ For Ubuntu/Linux User:
     libwxbase2.8-0 libwxgtk2.8-0 python-wxglade
 
   The other Linux Desktop can install these packages with its own package
-  managment tool, such as rpm, emerge and so on.
+  managment tool, such as yum, emerge and so on.
 
   GCC may have been installed as default for most of Linux Desktop. 
 
