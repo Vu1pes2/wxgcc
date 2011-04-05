@@ -51,4 +51,4 @@ http://sourceforge.net/projects/mingw/files/Automated%20MinGW%20Installer/mingw-
 
 
 If have any question, please mailto: zwang@ucrobotics.com 
-For more information, please visit: http://www.ucrobotics.com/?q=cn/node/97
+For more information, please visit: http://www.ucrobotics.com/?q=cn/forum/13
