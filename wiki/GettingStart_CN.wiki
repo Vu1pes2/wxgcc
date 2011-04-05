@@ -7,11 +7,11 @@ Wxgcc是一个夸平台（Windows/Linux）的GCC编译器图形前端软件，�
 {{{
     $ sudo aptitude install python-wxgtk2.8 libwxgtk2.8-dev python-wxtools libwxbase2.8-0 libwxgtk2.8-0 python-wxglade
 }}}
-其它Linux发行版可通过自己的包管理工具（如yum, emerge等）进行安装。
+  其它Linux发行版可通过自己的包管理工具（如yum, emerge等）进行安装。
 
-至于GCC则一般都会被默认安装到各个Linux发行版之中。
+  至于GCC则一般都会被默认安装到各个Linux发行版之中。
 
-进入到wxgcc目录后可通过如下命令启动该程序：
+  进入到wxgcc目录后可通过如下命令启动该程序：
 {{{
     $ python wxgcc.py &
 }}}
