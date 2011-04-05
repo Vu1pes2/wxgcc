@@ -19,11 +19,17 @@ import wx.aui
 import wx.richtext as rt
 from wx import stc
 from wx.lib.wordwrap import wordwrap
-import threading
+import webbrowser 
+#import threading
 
-TmpBin = "/tmp/foo"
-TmpLog = "/tmp/foo.log"
-TmpRes = "/tmp/foo.res"
+if wx.Platform == "__WXMSW__":
+    TmpBin = "C:\\foo"
+    TmpLog = "C:\\foo.log"
+    TmpRes = "C:\\foo.res"
+else:
+    TmpBin = "/tmp/foo"
+    TmpLog = "/tmp/foo.log"
+    TmpRes = "/tmp/foo.res"
 
 # convert tab to TabLen spaces
 TabLen = 8
@@ -66,13 +72,17 @@ KeyWords = "and and_eq asm auto bitand bitor bool break case catch char class co
 
 ArrList = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
+Version = "Wxgcc V1.8.5"
+
 #----------------------------------------------------------------------
 
 class WxgccFrame(wx.Frame):
     def __init__(self, parent, id=-1):
-        wx.Frame.__init__(self, parent, wx.ID_ANY, title='wxgcc v1.8', size=(800, 600), style = wx.DEFAULT_FRAME_STYLE)
+        wx.Frame.__init__(self, parent, wx.ID_ANY, title=Version, size=(800, 600), style = wx.DEFAULT_FRAME_STYLE)
         self.Bind(wx.EVT_CLOSE, self.OnExit)
-        self.Bind(wx.EVT_KEY_UP , self.OnKeyUp);
+
+        # Will not works on windows if Bind here
+        #self.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
 
         # set the frame icon
         self.SetIcon(wx.Icon('./icon/wxgcc.ico', wx.BITMAP_TYPE_ICO))
@@ -81,14 +91,16 @@ class WxgccFrame(wx.Frame):
         self.Center()
 
         self.FileFlag = 0
-        self.LineNumber = 1
         self.FileTxt = ""
         self.lock = False
         self.FullScreen = False
-        self.panel = wx.Panel(self, wx.ID_ANY)
+
+        # If create a rtc and log based panel, then will not works well on windows, cursor will swith from rtc to log when Enter.
+        ## self.panel = wx.Panel(self, wx.ID_ANY)
 
         self.mgr = wx.aui.AuiManager()
-        self.mgr.SetManagedWindow(self.panel)
+        ## self.mgr.SetManagedWindow(self.panel)
+        self.mgr.SetManagedWindow(self)
 
         self.MakeMenuBar()
         self.MakeToolBar()
@@ -96,11 +108,14 @@ class WxgccFrame(wx.Frame):
         self.StatusBar.SetFieldsCount(2)
         #self.StatusBar.SetStatusWidths([-3,-2])
 
-        # create log box
-        self.log = wx.TextCtrl(self.panel, -1, style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL, size=(-1,200))
+        # create log box, wx.TE_RICH2 can enable to set the text colour in Windows
+        ## self.log = wx.TextCtrl(self.panel, -1, style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL, size=(-1,200))
+        self.log = wx.TextCtrl(self, -1, style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL|wx.TE_RICH2, size=(-1,200))
 
         # create richText box and init: http://docs.wxwidgets.org/stable/wx_wxrichtextctrl.html
-        self.rtc = rt.RichTextCtrl(self.panel, style=wx.VSCROLL|wx.HSCROLL|wx.NO_BORDER, size=(-1,300));
+	## self.rtc = rt.RichTextCtrl(self.panel, style=wx.VSCROLL|wx.HSCROLL|wx.NO_BORDER, size=(-1,300))
+        self.rtc = rt.RichTextCtrl(self, style=wx.VSCROLL|wx.HSCROLL|wx.NO_BORDER, size=(-1,300))
+        self.rtc.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
         wx.CallAfter(self.rtc.SetFocus)
         self.OnNewC(True)
 
@@ -217,11 +232,11 @@ class WxgccFrame(wx.Frame):
             self.InitC()
             self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
             self.FileFlag = 0
-            self.LineNumber = self.rtc.GetNumberOfLines()
             self.rtc.SetFilename("")
             self.rtc.SetInsertionPoint(0)
             self.SyntaxHighlight()
-            titleTxt = "[Untitled C File] - Wxgcc"
+            #self.TabToSpace()
+            titleTxt = "[Untitled C File] - " + Version
             wx.CallAfter(self.UpdateTitle, titleTxt)
             #wx.CallAfter(self.UpdateStatus, "")
 
@@ -232,11 +247,11 @@ class WxgccFrame(wx.Frame):
             self.InitCpp()
             self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
             self.FileFlag = 1
-            self.LineNumber = self.rtc.GetNumberOfLines()
             self.rtc.SetFilename("")
             self.rtc.SetInsertionPoint(0)
             self.SyntaxHighlight()
-            titleTxt = "[Untitled C++ File] - Wxgcc"
+            #self.TabToSpace()
+            titleTxt = "[Untitled C++ File] - " + Version
             wx.CallAfter(self.UpdateTitle, titleTxt)
             #wx.CallAfter(self.UpdateStatus, "New C++ file")
 
@@ -257,7 +272,7 @@ class WxgccFrame(wx.Frame):
     def OnFileOpen(self, evt):
         # This gives us a string suitable for the file dialog based on
         # the file handlers that are loaded
-        ##wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=False)
+        ## wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=False)
         wildcard = "Files (*.c;*.cpp)|*.c;*.cpp"
         dlg = wx.FileDialog(self, "Choose a filename", wildcard=wildcard, style=wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
@@ -271,9 +286,8 @@ class WxgccFrame(wx.Frame):
                     self.rtc.SetValue(fv)
                     f.close()
                     self.rtc.SetFilename(path)
-                    self.LineNumber = self.rtc.GetNumberOfLines()
                     self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
-                    titleTxt = "[" + path + "] - Wxgcc"
+                    titleTxt = "[" + path + "] - " + Version
                     wx.CallAfter(self.UpdateTitle, titleTxt)
                     if path.split('.')[-1] == 'c':
                         self.FileFlag = 0
@@ -286,6 +300,7 @@ class WxgccFrame(wx.Frame):
                         self.rtc.SetBackgroundColour((224,236,248))
                         self.log.SetBackgroundColour((224,236,248))
                     self.SyntaxHighlight()
+                    self.TabToSpace()
         dlg.Destroy()
         
     def OnFileSave(self, evt):
@@ -301,31 +316,48 @@ class WxgccFrame(wx.Frame):
             return
         
     def OnFileSaveAs(self, evt):
-        ##wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=True)
+        ## wildcard, types = rt.RichTextBuffer.GetExtWildcard(save=True)
         wildcard = "Files (*.c;*.cpp)|*.c;*.cpp"
         dlg = wx.FileDialog(self, "Choose a filename", wildcard=wildcard, style=wx.SAVE)
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
             if path:
 
-                ##fileType = types[dlg.GetFilterIndex()]
-                ##ext = rt.RichTextBuffer.FindHandlerByType(fileType).GetExtension()
-                ##if not path.endswith(ext):
-                ##    path += '.' + ext
+                ## fileType = types[dlg.GetFilterIndex()]
+                ## ext = rt.RichTextBuffer.FindHandlerByType(fileType).GetExtension()
+                ## if not path.endswith(ext):
+                ##     path += '.' + ext
 
                 # auto add file extention
-                if path.split('.')[-1] != 'c' and path.split('.')[-1] != 'cpp':
-                    if self.FileFlag == 0:
-                        path += ".c"
-                    else:
-                        path += ".cpp"
+                if wx.Platform == "__WXMSW__":
+                    if path.split('.')[-1] == 'c' and self.FileFlag == 1:
+                        path = path.split('.')[0] + ".cpp"
+                    if path.split('.')[-1] == 'cpp' and self.FileFlag == 0:
+                        path = path.split('.')[0] + ".c"
+                    if path.split('.')[-1] != 'c' and path.split('.')[-1] != 'cpp':
+                        if self.FileFlag == 0:
+                            path += ".c"
+                        else:
+                            path += ".cpp"
+
+                else:
+                    if path.split('.')[-1] == 'c' and self.FileFlag == 1:
+                        path = path.split('.')[0] + ".cpp"
+                    if path.split('.')[-1] == 'cpp' and self.FileFlag == 0:
+                        path = path.split('.')[0] + ".c"
+                    if path.split('.')[-1] != 'c' and path.split('.')[-1] != 'cpp':
+                        if self.FileFlag == 0:
+                            path += ".c"
+                        else:
+                            path += ".cpp"
 
                 #self.rtc.SaveFile(path, fileType)
                 self.FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
                 f = file(path, 'w')
                 f.write(str(self.FileTxt))
                 f.close()
-                titleTxt = "[" + path + "] - Wxgcc"
+                self.rtc.SetFilename(path)
+                titleTxt = "[" + path + "] - " + Version
                 wx.CallAfter(self.UpdateTitle, titleTxt)
         dlg.Destroy()
                 
@@ -334,12 +366,17 @@ class WxgccFrame(wx.Frame):
             self.Destroy()
 
     def OnKeyUp(self, evt):
-        if evt.GetKeyCode() == wx.WXK_SPACE or evt.GetKeyCode() == wx.WXK_RETURN:
+        if evt.GetKeyCode() == wx.WXK_SPACE:
             self.SyntaxHighlight()
+        if evt.GetKeyCode() == wx.WXK_RETURN:
+            self.AutoIndent()
+            self.SyntaxHighlight()
+        if evt.GetKeyCode() == wx.WXK_TAB:
+            self.TabToSpace()
         if evt.GetKeyCode() == wx.WXK_BACK:
             self.DelPrevTab()
-        #if evt.GetKeyCode() == wx.WXK_DELETE:
-        #    self.DelNextTab()
+        # if evt.GetKeyCode() == wx.WXK_DELETE:
+        #     self.DelNextTab()
 
     def OnForceExit(self, evt):
         sys.exit(0)
@@ -359,10 +396,13 @@ class WxgccFrame(wx.Frame):
             FilePath = TmpBin + ".cpp"
 
         # delete old tmp files
-        os.system("rm -rf /tmp/foo* > /dev/null 2>&1")
+        if wx.Platform == "__WXMSW__":
+            os.system("del C:\\foo*")
+        else:
+            os.system("rm -rf /tmp/foo* > /dev/null 2>&1")
 
         # save file: tmp var FileTxt shoule be used here, but not self.FileTxt, for the change is not write into orig file
-        #self.rtc.SaveFile(FilePath, 1)
+        # self.rtc.SaveFile(FilePath, 1)
         FileTxt = self.rtc.GetRange(0, self.rtc.GetLastPosition()).encode("utf-8")
         f = file(FilePath, 'w')
         f.write(FileTxt)
@@ -374,20 +414,29 @@ class WxgccFrame(wx.Frame):
         if OrigFilePath:
             self.rtc.SetFilename(OrigFilePath)
 
-        # get run log if compile success
-        if os.path.isfile(TmpBin):
-            os.system(TmpBin + " > " + TmpRes + " 2>&1")
-            info = os.popen("cat " + TmpRes).read()
-            self.log.SetDefaultStyle(wx.TextAttr("black",wx.NullColor))
-
-        #get build log if compile failed
+        if wx.Platform == "__WXMSW__":
+            # get run log if compile success
+            if os.path.isfile(TmpBin + ".exe"):
+                os.system(TmpBin + ".exe > " + TmpRes + " 2>&1")
+                info = os.popen("type " + TmpRes).read()
+                self.log.SetDefaultStyle(wx.TextAttr("black",wx.NullColor))
+            else:
+                info = os.popen("type " + TmpLog).read()
+                self.log.SetDefaultStyle(wx.TextAttr("red",wx.NullColor))
+            # write log to log panel with timestamp
+            date = os.popen("time /t").read()
+            self.log.SetValue("************ Time: " + date.split("\n")[0] + " ************\n")
         else:
-            info = os.popen("cat " + TmpLog).read()
-            self.log.SetDefaultStyle(wx.TextAttr("red",wx.NullColor))
+            if os.path.isfile(TmpBin):
+                os.system(TmpBin + " > " + TmpRes + " 2>&1")
+                info = os.popen("cat " + TmpRes).read()
+                self.log.SetDefaultStyle(wx.TextAttr("black",wx.NullColor))
+            else:
+                info = os.popen("cat " + TmpLog).read()
+                self.log.SetDefaultStyle(wx.TextAttr("red",wx.NullColor))
+            date = os.popen("date").read()
+            self.log.SetValue("************ Time: " + date.split(" ")[4] + " ************\n")
 
-        # write log to log panel with timestamp
-        date = os.popen("date").read()
-        self.log.SetValue("************ Time: " + date.split(" ")[4] + " ************\n")
         self.log.AppendText(info + "\n")
 
     def OnLock(self, evt):
@@ -548,10 +597,10 @@ class WxgccFrame(wx.Frame):
     def OnAbout(self, evt):
         # First we create and fill the info object
         info = wx.AboutDialogInfo()
-        info.Name = "wxgcc"
-        info.Version = "1.8"
+        info.Name = Version.split(" ")[0]
+        info.Version = Version.split(" ")[1]
         info.Copyright = "(C) 2011 Zechao Wang"
-        info.Description = wordwrap("The \"wxgcc\" is a GUI toolkit for GCC based wxPython which used under Linux, with that tool user can create and compile a C/C++ program very fast.", 350, wx.ClientDC(self))
+        info.Description = wordwrap("The \"wxgcc\" is a GUI toolkit for GCC based wxPython which can be used under Windows and Linux, with that tool user can create and compile a C/C++ program very fast.", 350, wx.ClientDC(self))
         info.WebSite = ("http://code.google.com/p/wxgcc/", "wxgcc home page")
         info.Developers = [ "Zechao Wang <zwang@ucrobotics.com>" ]
 
@@ -559,6 +608,10 @@ class WxgccFrame(wx.Frame):
 
         # Then we call wx.AboutBox giving it that info object
         wx.AboutBox(info)
+
+    def OnCheckUpdate(self, evt):
+        url = "http://code.google.com/p/wxgcc/downloads/list"
+        webbrowser.open(url)
 
     def ForwardEvent(self, evt):
         # The RichTextCtrl can handle menu and update events for undo,
@@ -569,35 +622,6 @@ class WxgccFrame(wx.Frame):
         # get line info
         RangeTxt = self.rtc.GetRange(0, self.rtc.GetInsertionPoint())
         PositionInfo =  "Row: " + str(len(RangeTxt.split('\n'))) + "    |    " + "Col: " + str(len(RangeTxt.split('\n')[-1])) + "    |    " + "Total Line Numbers: " + str(self.rtc.GetNumberOfLines())
-
-        # replace the tab with TabLen space
-        start = 0
-        end = self.rtc.GetLastPosition()
-        while True:
-            # textStr will change after replace for end position is changed
-            textStr = self.rtc.GetRange(0, end)
-            loc = textStr.find('\t', start, end)
-            if loc == -1 or start >= end:
-                break
-            self.rtc.ShowPosition(loc)
-            self.rtc.SetSelection(loc, loc + 1)
-            self.rtc.Replace(loc, loc + 1, " " * TabLen)
-            start = loc + TabLen
-            # after textStr changed, end need to be updated too
-            end = self.rtc.GetLastPosition()
-
-        # get the space number in the beginning of previous line
-        SpaceNum = 0
-        if len(RangeTxt.split('\n')) > 1:
-            for c in RangeTxt.split('\n')[-2]:
-                if c == " ":
-                    SpaceNum += 1
-                else:
-                   break
-        # intelligent indent
-        if self.rtc.GetNumberOfLines() - self.LineNumber == 1 and SpaceNum >0:
-            self.rtc.WriteText(" " * SpaceNum)
-        self.LineNumber = self.rtc.GetNumberOfLines()
 
         # update status bar
         wx.CallAfter(self.UpdateStatus, PositionInfo, 1)
@@ -729,6 +753,36 @@ class WxgccFrame(wx.Frame):
                 self.rtc.SetStyle((arr3[j], arr4[j]+2), attr)
                 j += 1
 
+    def TabToSpace(self):
+        start = 0
+        end = self.rtc.GetLastPosition()
+        while True:
+            # textStr will change after replace for end position is changed
+            textStr = self.rtc.GetRange(0, end)
+            loc = textStr.find('\t', start, end)
+            if loc == -1 or start >= end:
+                break
+            self.rtc.ShowPosition(loc)
+            self.rtc.SetSelection(loc, loc + 1)
+            self.rtc.Replace(loc, loc + 1, " " * TabLen)
+            start = loc + TabLen
+            # after textStr changed, end need to be updated too
+            end = self.rtc.GetLastPosition()
+
+    def AutoIndent(self):
+        RangeTxt = self.rtc.GetRange(0, self.rtc.GetInsertionPoint())
+        # get the space number in the beginning of previous line
+        SpaceNum = 0
+        if len(RangeTxt.split('\n')) > 1:
+            for c in RangeTxt.split('\n')[-2]:
+                if c == " ":
+                    SpaceNum += 1
+                else:
+                   break
+        # auto indent
+        if SpaceNum > 0:
+            self.rtc.WriteText(" " * SpaceNum)
+
     def DelPrevTab(self):
         RangeTxt = self.rtc.GetRange(0, self.rtc.GetInsertionPoint())
         # get the space number in the previous of current point
@@ -810,6 +864,7 @@ class WxgccFrame(wx.Frame):
 
         helpMenu = wx.Menu()
         doBind( helpMenu.Append(-1, "&About"), self.OnAbout)
+        doBind( helpMenu.Append(-1, "&Check Update"), self.OnCheckUpdate)
         
         self.mb = wx.MenuBar()
         self.mb.Append(fileMenu, "&File")
@@ -856,7 +911,7 @@ class WxgccFrame(wx.Frame):
         for iditem in idlist:
             self.tbar.EnableTool(iditem, flag)
 
-
+"""
 class MyThread(threading.Thread):
     def __init__(self, rtc):
         self.active = False
@@ -866,6 +921,7 @@ class MyThread(threading.Thread):
     def run(self):
         # do something ...
         pass
+"""
 
 #----------------------------------------------------------------------
 
