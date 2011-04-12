@@ -7,6 +7,14 @@ Wxgcc是一个夸平台（Windows/Linux）的GCC编译器图形前端软件，�
 {{{
     $ sudo aptitude install python-wxgtk2.8 libwxgtk2.8-dev python-wxtools libwxbase2.8-0 libwxgtk2.8-0 python-wxglade
 }}}
+
+  对于Linux系统，VTE虚拟终端库也是需要安装的，不过Linux系统中都已经默认安装了，因为Gnome-Terminal程序也会依赖该库。
+
+  如果不是很确定，可以通过如下命令安装：
+{{{
+    $ sudo aptitude install libvte-common libvte-dev libvte9 python-vte
+}}} 
+
   其它Linux发行版可通过自己的包管理工具（如yum, emerge等）进行安装。
 
   至于GCC则一般都会被默认安装到各个Linux发行版之中。
