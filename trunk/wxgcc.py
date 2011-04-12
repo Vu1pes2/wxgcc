@@ -621,7 +621,7 @@ class WxgccFrame(wx.Frame):
 
         # get line info
         RangeTxt = self.rtc.GetRange(0, self.rtc.GetInsertionPoint())
-        PositionInfo =  "Row: " + str(len(RangeTxt.split('\n'))) + "    |    " + "Col: " + str(len(RangeTxt.split('\n')[-1])) + "    |    " + "Total Line Numbers: " + str(self.rtc.GetNumberOfLines())
+        PositionInfo =  "Row: " + str(len(RangeTxt.split('\n'))) + "  |  " + "Col: " + str(len(RangeTxt.split('\n')[-1])) + "  |  " + "Total Lines: " + str(self.rtc.GetNumberOfLines())
 
         # update status bar
         wx.CallAfter(self.UpdateStatus, PositionInfo, 1)
