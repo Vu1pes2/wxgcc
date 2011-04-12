@@ -1,3 +1,9 @@
+V1.8.6:
+    * Display interactive window when running program
+    * Support to run scanf() and getchar()
+
+===============================================
+
 V1.8.5:
     * Support MS Windows platform
     * Fix some micro bug
