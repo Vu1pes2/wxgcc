@@ -19,17 +19,21 @@ import wx.aui
 import wx.richtext as rt
 from wx import stc
 from wx.lib.wordwrap import wordwrap
-import webbrowser 
+import webbrowser
+
 #import threading
+
+if not wx.Platform == "__WXMSW__":
+    from gtkwin import GtkWin
 
 if wx.Platform == "__WXMSW__":
     TmpBin = "C:\\foo"
     TmpLog = "C:\\foo.log"
-    TmpRes = "C:\\foo.res"
+    #TmpRes = "C:\\foo.res"
 else:
     TmpBin = "/tmp/foo"
     TmpLog = "/tmp/foo.log"
-    TmpRes = "/tmp/foo.res"
+    #TmpRes = "/tmp/foo.res"
 
 # convert tab to TabLen spaces
 TabLen = 8
@@ -72,13 +76,13 @@ KeyWords = "and and_eq asm auto bitand bitor bool break case catch char class co
 
 ArrList = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
-Version = "Wxgcc V1.8.5"
+Version = "Wxgcc V1.8.6"
 
 #----------------------------------------------------------------------
 
 class WxgccFrame(wx.Frame):
     def __init__(self, parent, id=-1):
-        wx.Frame.__init__(self, parent, wx.ID_ANY, title=Version, size=(800, 600), style = wx.DEFAULT_FRAME_STYLE)
+        wx.Frame.__init__(self, parent, wx.ID_ANY, title=Version, size=(600, 600), style = wx.DEFAULT_FRAME_STYLE)
         self.Bind(wx.EVT_CLOSE, self.OnExit)
 
         # Will not works on windows if Bind here
@@ -88,7 +92,7 @@ class WxgccFrame(wx.Frame):
         self.SetIcon(wx.Icon('./icon/wxgcc.ico', wx.BITMAP_TYPE_ICO))
 
         # set the window center
-        self.Center()
+        #self.Center()
 
         self.FileFlag = 0
         self.FileTxt = ""
@@ -408,36 +412,32 @@ class WxgccFrame(wx.Frame):
         f.write(FileTxt)
         f.close()
 
-        os.system(CC + " " + FilePath + " -o " + TmpBin + " > " + TmpLog + " 2>&1")
+        os.system(CC + " -Wall " + FilePath + " -o " + TmpBin + " > " + TmpLog + " 2>&1")
 
         # recover to the orig file path if compile an exist file
         if OrigFilePath:
             self.rtc.SetFilename(OrigFilePath)
 
         if wx.Platform == "__WXMSW__":
-            # get run log if compile success
             if os.path.isfile(TmpBin + ".exe"):
-                os.system(TmpBin + ".exe > " + TmpRes + " 2>&1")
-                info = os.popen("type " + TmpRes).read()
+                os.system("cmd /C " + TmpBin)
                 self.log.SetDefaultStyle(wx.TextAttr("black",wx.NullColor))
             else:
-                info = os.popen("type " + TmpLog).read()
                 self.log.SetDefaultStyle(wx.TextAttr("red",wx.NullColor))
-            # write log to log panel with timestamp
+            info = os.popen("type " + TmpLog).read()
             date = os.popen("time /t").read()
-            self.log.SetValue("************ Time: " + date.split("\n")[0] + " ************\n")
+            self.log.SetValue("************ Build Time: " + date.split("\n")[0] + " ************\n")
+            self.log.AppendText(info + "\n") 
         else:
             if os.path.isfile(TmpBin):
-                os.system(TmpBin + " > " + TmpRes + " 2>&1")
-                info = os.popen("cat " + TmpRes).read()
+                gwin.RunComm(TmpBin)
                 self.log.SetDefaultStyle(wx.TextAttr("black",wx.NullColor))
             else:
-                info = os.popen("cat " + TmpLog).read()
                 self.log.SetDefaultStyle(wx.TextAttr("red",wx.NullColor))
+            info = os.popen("cat " + TmpLog).read()
             date = os.popen("date").read()
-            self.log.SetValue("************ Time: " + date.split(" ")[4] + " ************\n")
-
-        self.log.AppendText(info + "\n")
+            self.log.SetValue("************ Build Time: " + date.split(" ")[4] + " ************\n")
+            self.log.AppendText(info + "\n")
 
     def OnLock(self, evt):
         if self.lock:
@@ -929,5 +929,6 @@ if __name__ == '__main__':
     app = wx.PySimpleApp()
     mwin = WxgccFrame(None)
     mwin.Show(True)
+    gwin = GtkWin()
     app.MainLoop()
 

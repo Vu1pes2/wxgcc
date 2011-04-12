@@ -9,9 +9,15 @@ packages have been installed on your host.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 For Ubuntu/Linux User:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  you can run this command to install wxpython:
+  You can run this command to install wxpython:
     $ sudo aptitude install python-wxgtk2.8 libwxgtk2.8-dev python-wxtools \ 
     libwxbase2.8-0 libwxgtk2.8-0 python-wxglade
+
+  The VTE library is also needed, it may be installed as default for most 
+  Linux Desktop for Gnome-Terminal is depend that library, too.
+
+  If not sure, just run this command to install:
+    $ sudo aptitude install libvte-common libvte-dev libvte9 python-vte
 
   The other Linux Desktop can install these packages with its own package
   managment tool, such as yum, emerge and so on.
