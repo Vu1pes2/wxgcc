@@ -1,4 +1,10 @@
-Wxgcc是一个夸平台（Windows/Linux）的GCC编译器图形前端软件，它是基于wxpython开发的，可以用来快速的编译验证一个C/C++程序，适合C/C++初学者使用！ 
+wxgcc是一个开源的C/C++编辑软件，该软件轻型小巧，支持代码高亮，支持即时输入即时运行；是对著名的GCC开源编译工具的简单图形前端实现，通过wxpython语言开发而成。支持Windows XP，Windows 7 和 Linux 等多个平台。
+
+wxgcc适用对象：
+  * C/C++初学者
+  * 不习惯终端操作的Linux用户
+  * 不喜欢Windows下庞大编译环境的Windows用户
+  * 阅读代码时需要随时验证某一个C/C++语言特性的用户
 
 在运行wxgcc程序之前，请先确认在你的系统中是否已经安装了Python, wxPython以及GCC编译环境。
 
@@ -45,5 +51,17 @@ Wxgcc是一个夸平台（Windows/Linux）的GCC编译器图形前端软件，�
 
   然后就可以通过双击wxgcc.py文件启动该程序了。
 
+使用技巧：
+  * 多使用tab键进行代码对齐操作(每个Tab被转换成8个Space)
+  * 使用Backspace删除多个空格(每次会删除8个Space, 相当于一个Tab)
+  * 语法高亮的变更只有在Space或Enter键弹起（ON_KEY_UP）时触发
+
+常用快捷键：
+  * F5 --- 编译并执行
+  * F11 --- 全屏显示
+  * Ctrl + L --- 锁屏进入只读状态
+  * Ctrl + F/R --- 查找/替换
+  * 其它的见程序的菜单栏
+
 有关于wxgcc的任何疑问请发Email至：zwang@ucrobotics.com<br>
-关于wxgcc的更多信息请访问：http://www.ucrobotics.com/?q=cn/forum/13 
+关于wxgcc的更多信息请访问：http://www.ucrobotics.com/index.php/zh/forum/7-Wxgcc%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE
