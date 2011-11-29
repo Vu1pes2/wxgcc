@@ -43,7 +43,7 @@ wxgcc适用对象：
 
   b) 下载安装python-2.7.msi：http://www.python.org/ftp/python/2.7/
 
-  c) 下载安装wxPython2.8-win32-unicode-py27： http://www.wxpython.org/download.php（注意：安装的最后一个画面有一个“将.py编译成.pyc”的选项需要选中，然后确定结束安装）
+  c) 下载安装wxPython2.8-win32-unicode-py27： http://www.wxpython.org/download.php （注意：安装的最后一个画面有一个“将.py编译成.pyc”的选项需要选中，然后确定结束安装）
 
   d) 下载安装py2exe-0.6.9.win32-py2.7.exe： http://sourceforge.net/projects/py2exe/files/py2exe/0.6.9/
 
