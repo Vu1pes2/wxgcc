@@ -43,13 +43,15 @@ wxgcc适用对象：
 
   b) 下载安装python-2.7.msi：http://www.python.org/ftp/python/2.7/
 
-  c) 下载安装wxPython2.8-win32-unicode-py27： http://www.wxpython.org/download.php
+  c) 下载安装wxPython2.8-win32-unicode-py27： http://www.wxpython.org/download.php（注意：安装的最后一个画面有一个“将.py编译成.pyc”的选项需要选中，然后确定结束安装）
 
   d) 下载安装py2exe-0.6.9.win32-py2.7.exe： http://sourceforge.net/projects/py2exe/files/py2exe/0.6.9/
 
   使用默认选项安装b), c), d)即可，安装结束后同样需要将路径"C:\Python27"添加到PATH环境变量之中
 
   然后就可以通过双击wxgcc.py文件启动该程序了。
+
+（如果出现启动失败的情况，可以通过cmd终端先cd到wxgcc_v1.8.6目录，然后执行“python wxgcc.py”进行启动，然后终端会显示错误的信息；可能会存在两个原因：一是"import wx"失败，需重装(c)步骤；二是找不到GtkWin类，可以通过记事本打开wxgcc.py,然后将倒数第二行注释掉即可，通过#号注释，改成这样：#gwin = GtkWin()，然后保存再次双击应该就能启动了。）
 
 使用技巧：
   * 多使用tab键进行代码对齐操作(每个Tab被转换成8个Space)
